@@ -37,6 +37,17 @@ python statgen_radar.py --days 30 --mode daily --min-score 4
 
 You can also run it manually from the GitHub Actions page.
 
+## Email delivery
+
+The workflow can send each generated brief to `Jasperoa@outlook.com` using Outlook SMTP. Add these repository secrets under **Settings → Secrets and variables → Actions → New repository secret**:
+
+- `SMTP_USERNAME`: the Outlook account used to send mail, normally `Jasperoa@outlook.com`
+- `SMTP_PASSWORD`: the account password or app password accepted by Outlook SMTP
+
+Credentials are never stored in the source code. If the secrets are absent, literature collection and report generation still run, but the email step is skipped.
+
+The generated Markdown report is used as the email body and is also attached to the message.
+
 ## Relevance model
 
 The first version uses transparent weighted keyword scoring rather than an external LLM. Edit `config/keywords.yml` to change terms and weights. A later version can add OpenAI-based structured summaries through an optional repository secret without changing the collectors or database schema.
@@ -47,6 +58,7 @@ The first version uses transparent weighted keyword scoring rather than an exter
 - Some publisher feeds expose titles but incomplete abstracts.
 - A preprint and its journal version may not always share identifiers; DOI-based and normalized-title deduplication are both used.
 - Generated summaries are extractive metadata briefs, not substitutes for reading the paper.
+- Outlook may require an app password or additional SMTP authentication settings depending on the account security configuration.
 
 ## Repository structure
 
