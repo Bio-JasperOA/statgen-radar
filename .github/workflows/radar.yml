@@ -1,8 +1,6 @@
 name: StatGen Radar
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
     inputs:
       mode:
