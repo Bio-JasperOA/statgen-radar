@@ -53,9 +53,13 @@ jobs:
           REPORT_DATE="$(date -u +%F)"
           REPORT_PATH="reports/${{ steps.config.outputs.mode }}/$REPORT_DATE.md"
           ISSUE_TITLE="StatGen Radar — ${{ steps.config.outputs.mode }} brief — $REPORT_DATE"
+          ISSUE_BODY="$RUNNER_TEMP/statgen-radar-issue.md"
+          printf '@Bio-JasperOA\n\n' > "$ISSUE_BODY"
+          cat "$REPORT_PATH" >> "$ISSUE_BODY"
           echo "REPORT_DATE=$REPORT_DATE" >> "$GITHUB_ENV"
           echo "REPORT_PATH=$REPORT_PATH" >> "$GITHUB_ENV"
           echo "ISSUE_TITLE=$ISSUE_TITLE" >> "$GITHUB_ENV"
+          echo "ISSUE_BODY=$ISSUE_BODY" >> "$GITHUB_ENV"
       - name: Publish brief as GitHub Issue
         env:
           GH_TOKEN: ${{ github.token }}
@@ -63,11 +67,11 @@ jobs:
         run: |
           EXISTING_NUMBER="$(gh issue list --state all --limit 100 --json number,title --jq ".[] | select(.title == \"$ISSUE_TITLE\") | .number" | head -n 1)"
           if [[ -n "$EXISTING_NUMBER" ]]; then
-            gh issue edit "$EXISTING_NUMBER" --title "$ISSUE_TITLE" --body-file "$REPORT_PATH"
+            gh issue edit "$EXISTING_NUMBER" --title "$ISSUE_TITLE" --body-file "$ISSUE_BODY" --add-assignee Bio-JasperOA
             gh issue reopen "$EXISTING_NUMBER" || true
             echo "Updated issue #$EXISTING_NUMBER"
           else
-            gh issue create --title "$ISSUE_TITLE" --body-file "$REPORT_PATH"
+            gh issue create --title "$ISSUE_TITLE" --body-file "$ISSUE_BODY" --assignee Bio-JasperOA
           fi
       - name: Commit reports
         shell: bash
