@@ -37,16 +37,17 @@ python statgen_radar.py --days 30 --mode daily --min-score 4
 
 You can also run it manually from the GitHub Actions page.
 
-## Email delivery
+## GitHub Issue delivery
 
-The workflow can send each generated brief to `Jasperoa@outlook.com` using Outlook SMTP. Add these repository secrets under **Settings → Secrets and variables → Actions → New repository secret**:
+Each run publishes the generated brief as a GitHub Issue. The issue title includes the report mode and UTC date, for example:
 
-- `SMTP_USERNAME`: the Outlook account used to send mail, normally `Jasperoa@outlook.com`
-- `SMTP_PASSWORD`: the account password or app password accepted by Outlook SMTP
+```text
+StatGen Radar — daily brief — 2026-07-14
+```
 
-Credentials are never stored in the source code. If the secrets are absent, literature collection and report generation still run, but the email step is skipped.
+If the workflow is rerun on the same date, it updates the existing issue instead of creating a duplicate. No email provider, SMTP password, API key, or sending-domain configuration is required.
 
-The generated Markdown report is used as the email body and is also attached to the message.
+To receive GitHub notifications by email, open the repository and select **Watch → All Activity**. GitHub sends notifications to the email address configured in your GitHub notification settings.
 
 ## Relevance model
 
@@ -58,7 +59,7 @@ The first version uses transparent weighted keyword scoring rather than an exter
 - Some publisher feeds expose titles but incomplete abstracts.
 - A preprint and its journal version may not always share identifiers; DOI-based and normalized-title deduplication are both used.
 - Generated summaries are extractive metadata briefs, not substitutes for reading the paper.
-- Outlook may require an app password or additional SMTP authentication settings depending on the account security configuration.
+- GitHub controls notification delivery and formatting; the repository must be watched for email notifications.
 
 ## Repository structure
 
