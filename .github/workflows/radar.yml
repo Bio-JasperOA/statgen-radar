@@ -1,0 +1,87 @@
+name: StatGen Radar
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Report mode
+        required: true
+        default: daily
+        type: choice
+        options: [daily, weekly]
+      days:
+        description: Lookback days
+        required: true
+        default: "1"
+  schedule:
+    - cron: "0 0 * * *"
+    - cron: "15 0 * * 1"
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  radar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Resolve run mode
+        id: config
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "mode=${{ inputs.mode }}" >> "$GITHUB_OUTPUT"
+            echo "days=${{ inputs.days }}" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event.schedule }}" == "15 0 * * 1" ]]; then
+            echo "mode=weekly" >> "$GITHUB_OUTPUT"
+            echo "days=7" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=daily" >> "$GITHUB_OUTPUT"
+            echo "days=1" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Run radar
+        run: python statgen_radar.py --mode "${{ steps.config.outputs.mode }}" --days "${{ steps.config.outputs.days }}"
+      - name: Resolve report metadata
+        shell: bash
+        run: |
+          REPORT_DATE="$(date -u +%F)"
+          REPORT_PATH="reports/${{ steps.config.outputs.mode }}/$REPORT_DATE.md"
+          ISSUE_TITLE="StatGen Radar — ${{ steps.config.outputs.mode }} brief — $REPORT_DATE"
+          ISSUE_BODY="$RUNNER_TEMP/statgen-radar-issue.md"
+          printf '@Bio-JasperOA\n\n' > "$ISSUE_BODY"
+          cat "$REPORT_PATH" >> "$ISSUE_BODY"
+          echo "REPORT_DATE=$REPORT_DATE" >> "$GITHUB_ENV"
+          echo "REPORT_PATH=$REPORT_PATH" >> "$GITHUB_ENV"
+          echo "ISSUE_TITLE=$ISSUE_TITLE" >> "$GITHUB_ENV"
+          echo "ISSUE_BODY=$ISSUE_BODY" >> "$GITHUB_ENV"
+      - name: Publish brief as GitHub Issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          EXISTING_NUMBER="$(gh issue list --state all --limit 100 --json number,title --jq ".[] | select(.title == \"$ISSUE_TITLE\") | .number" | head -n 1)"
+          if [[ -n "$EXISTING_NUMBER" ]]; then
+            gh issue edit "$EXISTING_NUMBER" --title "$ISSUE_TITLE" --body-file "$ISSUE_BODY" --add-assignee Bio-JasperOA
+            gh issue reopen "$EXISTING_NUMBER" || true
+            echo "Updated issue #$EXISTING_NUMBER"
+          else
+            gh issue create --title "$ISSUE_TITLE" --body-file "$ISSUE_BODY" --assignee Bio-JasperOA
+          fi
+      - name: Commit reports
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports data/literature.db
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update literature brief"
+            git push
+          fi
