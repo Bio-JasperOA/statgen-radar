@@ -1,0 +1,41 @@
+core:
+  genome-wide association: 6
+  gwas: 6
+  statistical genetics: 6
+  genetic association: 5
+  summary statistics: 4
+methods:
+  fine-mapping: 4
+  colocalization: 4
+  mendelian randomization: 4
+  genetic correlation: 4
+  heritability: 3
+  polygenic risk score: 4
+  linkage disequilibrium: 3
+  rare variant: 3
+  gene-based association: 3
+  trans-ancestry: 3
+  multi-ancestry: 3
+  pleiotropy: 3
+functional:
+  eqtl: 3
+  sqtl: 3
+  pqtl: 3
+  twas: 3
+  variant-to-gene: 3
+  functional genomics: 2
+emerging:
+  whole-genome sequencing: 2
+  long-read sequencing: 2
+  pangenome: 2
+  biobank: 2
+  single-cell genetics: 3
+  spatial qtl: 3
+  deep learning genetics: 3
+  foundation model genomics: 3
+project_priority:
+  cancer: 2
+  cardiovascular: 2
+  comorbidity: 2
+  cross-trait: 2
+  mediation: 2
