@@ -19,15 +19,11 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   radar:
     runs-on: ubuntu-latest
-    env:
-      MAILJET_API_KEY: ${{ secrets.MAILJET_API_KEY }}
-      MAILJET_SECRET_KEY: ${{ secrets.MAILJET_SECRET_KEY }}
-      MAIL_TO: Jasperoa@outlook.com
-      MAIL_FROM: Jasperoa@outlook.com
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
@@ -51,44 +47,28 @@ jobs:
           fi
       - name: Run radar
         run: python statgen_radar.py --mode "${{ steps.config.outputs.mode }}" --days "${{ steps.config.outputs.days }}"
-      - name: Resolve report path
+      - name: Resolve report metadata
         shell: bash
         run: |
-          REPORT_PATH="reports/${{ steps.config.outputs.mode }}/$(date -u +%F).md"
+          REPORT_DATE="$(date -u +%F)"
+          REPORT_PATH="reports/${{ steps.config.outputs.mode }}/$REPORT_DATE.md"
+          ISSUE_TITLE="StatGen Radar — ${{ steps.config.outputs.mode }} brief — $REPORT_DATE"
+          echo "REPORT_DATE=$REPORT_DATE" >> "$GITHUB_ENV"
           echo "REPORT_PATH=$REPORT_PATH" >> "$GITHUB_ENV"
-          echo "REPORT_DATE=$(date -u +%F)" >> "$GITHUB_ENV"
-      - name: Send brief through Mailjet
-        if: ${{ env.MAILJET_API_KEY != '' && env.MAILJET_SECRET_KEY != '' }}
+          echo "ISSUE_TITLE=$ISSUE_TITLE" >> "$GITHUB_ENV"
+      - name: Publish brief as GitHub Issue
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          python - <<'PY'
-          import os
-          from pathlib import Path
-          import requests
-
-          report_path = Path(os.environ["REPORT_PATH"])
-          body = report_path.read_text(encoding="utf-8")
-          payload = {
-              "Messages": [{
-                  "From": {"Email": os.environ["MAIL_FROM"], "Name": "StatGen Radar"},
-                  "To": [{"Email": os.environ["MAIL_TO"], "Name": "Song Jie"}],
-                  "Subject": f"StatGen Radar — daily brief — {os.environ['REPORT_DATE']}",
-                  "TextPart": body,
-              }]
-          }
-          response = requests.post(
-              "https://api.mailjet.com/v3.1/send",
-              auth=(os.environ["MAILJET_API_KEY"], os.environ["MAILJET_SECRET_KEY"]),
-              json=payload,
-              timeout=45,
-          )
-          print(response.status_code)
-          print(response.text)
-          response.raise_for_status()
-          PY
-      - name: Email configuration notice
-        if: ${{ env.MAILJET_API_KEY == '' || env.MAILJET_SECRET_KEY == '' }}
-        run: echo "Email skipped. Add MAILJET_API_KEY and MAILJET_SECRET_KEY as repository secrets."
+          EXISTING_NUMBER="$(gh issue list --state all --limit 100 --json number,title --jq ".[] | select(.title == \"$ISSUE_TITLE\") | .number" | head -n 1)"
+          if [[ -n "$EXISTING_NUMBER" ]]; then
+            gh issue edit "$EXISTING_NUMBER" --title "$ISSUE_TITLE" --body-file "$REPORT_PATH"
+            gh issue reopen "$EXISTING_NUMBER" || true
+            echo "Updated issue #$EXISTING_NUMBER"
+          else
+            gh issue create --title "$ISSUE_TITLE" --body-file "$REPORT_PATH"
+          fi
       - name: Commit reports
         shell: bash
         run: |
