@@ -1,6 +1,8 @@
 name: StatGen Radar
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       mode:
@@ -19,7 +21,6 @@ on:
 
 permissions:
   contents: write
-  issues: write
 
 concurrency:
   group: statgen-radar-${{ github.ref }}
@@ -28,6 +29,11 @@ concurrency:
 jobs:
   radar:
     runs-on: ubuntu-latest
+    env:
+      MAILJET_API_KEY: ${{ secrets.MAILJET_API_KEY }}
+      MAILJET_SECRET_KEY: ${{ secrets.MAILJET_SECRET_KEY }}
+      MAIL_FROM: Jasperoa@outlook.com
+      MAIL_TO: Jasperoa@outlook.com
     steps:
       - uses: actions/checkout@v7
         with:
@@ -58,27 +64,42 @@ jobs:
         run: |
           REPORT_DATE="$(date -u +%F)"
           REPORT_PATH="reports/${{ steps.config.outputs.mode }}/$REPORT_DATE.md"
-          ISSUE_TITLE="StatGen Radar — ${{ steps.config.outputs.mode }} brief — $REPORT_DATE"
-          ISSUE_BODY="$RUNNER_TEMP/statgen-radar-issue.md"
-          printf '@Bio-JasperOA\n\n' > "$ISSUE_BODY"
-          cat "$REPORT_PATH" >> "$ISSUE_BODY"
           echo "REPORT_DATE=$REPORT_DATE" >> "$GITHUB_ENV"
           echo "REPORT_PATH=$REPORT_PATH" >> "$GITHUB_ENV"
-          echo "ISSUE_TITLE=$ISSUE_TITLE" >> "$GITHUB_ENV"
-          echo "ISSUE_BODY=$ISSUE_BODY" >> "$GITHUB_ENV"
-      - name: Publish brief as GitHub Issue
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Send brief through Mailjet
         shell: bash
         run: |
-          EXISTING_NUMBER="$(gh issue list --state all --limit 100 --json number,title --jq ".[] | select(.title == \"$ISSUE_TITLE\") | .number" | head -n 1)"
-          if [[ -n "$EXISTING_NUMBER" ]]; then
-            gh issue edit "$EXISTING_NUMBER" --title "$ISSUE_TITLE" --body-file "$ISSUE_BODY" --add-assignee Bio-JasperOA
-            gh issue reopen "$EXISTING_NUMBER" || true
-            echo "Updated issue #$EXISTING_NUMBER"
-          else
-            gh issue create --title "$ISSUE_TITLE" --body-file "$ISSUE_BODY" --assignee Bio-JasperOA
-          fi
+          python - <<'PY'
+          import html
+          import os
+          from pathlib import Path
+          import requests
+
+          required = ["MAILJET_API_KEY", "MAILJET_SECRET_KEY", "MAIL_FROM", "MAIL_TO", "REPORT_PATH", "REPORT_DATE"]
+          missing = [name for name in required if not os.environ.get(name)]
+          if missing:
+              raise RuntimeError(f"Missing required configuration: {', '.join(missing)}")
+
+          report = Path(os.environ["REPORT_PATH"]).read_text(encoding="utf-8")
+          payload = {
+              "Messages": [{
+                  "From": {"Email": os.environ["MAIL_FROM"], "Name": "StatGen Radar"},
+                  "To": [{"Email": os.environ["MAIL_TO"], "Name": "Song Jie"}],
+                  "Subject": f"StatGen Radar — Daily Brief — {os.environ['REPORT_DATE']}",
+                  "TextPart": report,
+                  "HTMLPart": f"<pre style='white-space:pre-wrap;font-family:Arial,sans-serif'>{html.escape(report)}</pre>",
+              }]
+          }
+          response = requests.post(
+              "https://api.mailjet.com/v3.1/send",
+              auth=(os.environ["MAILJET_API_KEY"], os.environ["MAILJET_SECRET_KEY"]),
+              json=payload,
+              timeout=60,
+          )
+          print("Mailjet status:", response.status_code)
+          print(response.text)
+          response.raise_for_status()
+          PY
       - name: Commit reports
         shell: bash
         run: |
@@ -89,18 +110,14 @@ jobs:
             echo "No changes to commit"
             exit 0
           fi
-
           git commit -m "chore: update literature brief"
-
           for attempt in 1 2 3; do
             if git push origin HEAD:main; then
               exit 0
             fi
-
             echo "Push attempt $attempt failed; rebasing onto latest origin/main"
             git fetch origin main
             git rebase origin/main
           done
-
           echo "Failed to push report after 3 attempts"
           exit 1
