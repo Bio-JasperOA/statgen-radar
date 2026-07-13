@@ -23,6 +23,9 @@ permissions:
 jobs:
   radar:
     runs-on: ubuntu-latest
+    env:
+      SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -46,6 +49,29 @@ jobs:
           fi
       - name: Run radar
         run: python statgen_radar.py --mode "${{ steps.config.outputs.mode }}" --days "${{ steps.config.outputs.days }}"
+      - name: Resolve report path
+        shell: bash
+        run: |
+          REPORT_PATH="reports/${{ steps.config.outputs.mode }}/$(date -u +%F).md"
+          echo "REPORT_PATH=$REPORT_PATH" >> "$GITHUB_ENV"
+          echo "REPORT_DATE=$(date -u +%F)" >> "$GITHUB_ENV"
+      - name: Send brief by email
+        if: ${{ env.SMTP_USERNAME != '' && env.SMTP_PASSWORD != '' }}
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp-mail.outlook.com
+          server_port: 587
+          secure: false
+          username: ${{ env.SMTP_USERNAME }}
+          password: ${{ env.SMTP_PASSWORD }}
+          subject: "StatGen Radar — ${{ steps.config.outputs.mode }} brief — ${{ env.REPORT_DATE }}"
+          to: Jasperoa@outlook.com
+          from: "StatGen Radar <${{ env.SMTP_USERNAME }}>"
+          body: file://${{ env.REPORT_PATH }}
+          attachments: ${{ env.REPORT_PATH }}
+      - name: Email configuration notice
+        if: ${{ env.SMTP_USERNAME == '' || env.SMTP_PASSWORD == '' }}
+        run: echo "Email skipped. Add SMTP_USERNAME and SMTP_PASSWORD as repository secrets."
       - name: Commit reports
         shell: bash
         run: |
