@@ -1,6 +1,8 @@
 name: StatGen Radar
 
 on:
+  push:
+    branches: [feat/initial-pipeline]
   workflow_dispatch:
     inputs:
       mode:
