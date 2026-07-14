@@ -13,6 +13,11 @@ on:
         description: Lookback days
         required: true
         default: "1"
+  push:
+    branches: [main]
+    paths-ignore:
+      - "reports/**"
+      - "data/**"
   schedule:
     - cron: "0 0 * * *"
     - cron: "15 0 * * 1"
