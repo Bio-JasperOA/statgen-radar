@@ -1,11 +1,12 @@
 metric_name: Journal Impact Factor
-metric_year: 2024
+metric_year: 2025
 preprint_publication_score: 3
 unknown_journal_score: 0
 
+data_parts_glob: journal_metrics_2025.part*.b64
+data_source_note: User-provided 2025 Journal Impact Factor workbook
+
 # Publication-tier bonus added after relevance screening.
-# Update these thresholds or journal values when a new JCR edition is released.
-# Last manual workflow trigger: 2026-07-14.
 tiers:
   - min_if: 30
     score: 12
@@ -22,18 +23,5 @@ tiers:
   - min_if: 0
     score: 1
 
-# Values must be manually verified before entry. Journal names are normalized
-# case-insensitively. Aliases support abbreviated or alternative feed names.
-journals:
-  Nature Genetics:
-    impact_factor: 29.0
-    aliases: [Nat Genet]
-    source_note: 2024 Journal Citation Reports
-  Genome Biology:
-    impact_factor: 9.1
-    aliases: [Genome Biol]
-    source_note: 2024 Journal Citation Reports
-  Neuropsychopharmacology:
-    impact_factor: 7.1
-    aliases: []
-    source_note: 2024 Journal Citation Reports
+# Optional manual overrides. Entries here take precedence over the imported table.
+journals: {}
