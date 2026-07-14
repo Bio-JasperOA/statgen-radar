@@ -19,8 +19,6 @@ StatGen Radar is an automated literature-monitoring pipeline for GWAS and statis
 - bioRxiv API
 - medRxiv API
 
-A failing or unavailable source is logged and does not stop the remaining collectors. Europe PMC is the primary formal-publication source; Crossref and journal RSS feeds provide complementary early-online coverage.
-
 ## Quick start
 
 ```bash
