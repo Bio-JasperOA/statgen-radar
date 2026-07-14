@@ -2,6 +2,10 @@
 from __future__ import annotations
 
 import argparse
+import base64
+import csv
+import gzip
+import io
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -26,10 +30,43 @@ def journal_name(article: radar.Article) -> str:
     return article.source.strip()
 
 
+def load_external_metric_rows(config: dict) -> list[dict]:
+    pattern = config.get("data_parts_glob")
+    if not pattern:
+        return []
+    parts = sorted((ROOT / "config").glob(pattern))
+    if not parts:
+        raise FileNotFoundError(f"No journal metric parts matched config/{pattern}")
+    encoded = "".join(part.read_text(encoding="ascii").strip() for part in parts)
+    raw = gzip.decompress(base64.b64decode(encoded)).decode("utf-8")
+    return list(csv.DictReader(io.StringIO(raw), delimiter="\t"))
+
+
 def load_metrics() -> tuple[dict, dict[str, dict]]:
     with open(METRICS_PATH, encoding="utf-8") as handle:
         config = yaml.safe_load(handle) or {}
     lookup: dict[str, dict] = {}
+
+    for row in load_external_metric_rows(config):
+        canonical = (row.get("journal") or "").strip()
+        abbreviation = (row.get("abbreviation") or "").strip()
+        raw_jif = (row.get("impact_factor") or "").strip()
+        if not canonical or not raw_jif:
+            continue
+        try:
+            impact_factor = float(raw_jif)
+        except ValueError:
+            continue
+        entry = {
+            "journal": canonical,
+            "impact_factor": impact_factor,
+            "source_note": config.get("data_source_note", ""),
+        }
+        for name in (canonical, abbreviation):
+            if name:
+                lookup[normalize_journal(name)] = entry
+
+    # Optional manual overrides take precedence over the imported table.
     for canonical, values in (config.get("journals") or {}).items():
         entry = {
             "journal": canonical,
@@ -159,6 +196,7 @@ def main() -> int:
 
     keywords = radar.load_keywords()
     metric_config, metric_lookup = load_metrics()
+    print(f"JIF lookup entries={len(metric_lookup)} metric_year={metric_config.get('metric_year', 'Unknown')}")
     collectors = {
         "RSS": radar.collect_rss(args.days),
         "Europe PMC": radar.collect_europe_pmc(args.days),
