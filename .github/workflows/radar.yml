@@ -57,6 +57,8 @@ jobs:
           fi
       - name: Run radar
         run: python run_ranked_with_tsv.py --mode "${{ steps.config.outputs.mode }}" --days "${{ steps.config.outputs.days }}"
+      - name: Add complete inclusion table
+        run: python add_inclusion_table.py --mode "${{ steps.config.outputs.mode }}"
       - name: Commit reports
         shell: bash
         run: |
