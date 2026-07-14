@@ -5,6 +5,7 @@ unknown_journal_score: 0
 
 # Publication-tier bonus added after relevance screening.
 # Update these thresholds or journal values when a new JCR edition is released.
+# Last manual workflow trigger: 2026-07-14.
 tiers:
   - min_if: 30
     score: 12
