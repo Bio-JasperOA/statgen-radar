@@ -1,0 +1,38 @@
+metric_name: Journal Impact Factor
+metric_year: 2024
+preprint_publication_score: 3
+unknown_journal_score: 0
+
+# Publication-tier bonus added after relevance screening.
+# Update these thresholds or journal values when a new JCR edition is released.
+tiers:
+  - min_if: 30
+    score: 12
+  - min_if: 20
+    score: 10
+  - min_if: 10
+    score: 8
+  - min_if: 5
+    score: 6
+  - min_if: 3
+    score: 4
+  - min_if: 1
+    score: 2
+  - min_if: 0
+    score: 1
+
+# Values must be manually verified before entry. Journal names are normalized
+# case-insensitively. Aliases support abbreviated or alternative feed names.
+journals:
+  Nature Genetics:
+    impact_factor: 29.0
+    aliases: [Nat Genet]
+    source_note: 2024 Journal Citation Reports
+  Genome Biology:
+    impact_factor: 9.1
+    aliases: [Genome Biol]
+    source_note: 2024 Journal Citation Reports
+  Neuropsychopharmacology:
+    impact_factor: 7.1
+    aliases: []
+    source_note: 2024 Journal Citation Reports
