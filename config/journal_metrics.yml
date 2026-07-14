@@ -2,8 +2,6 @@ metric_name: Journal Impact Factor
 metric_year: 2025
 preprint_publication_score: 3
 unknown_journal_score: 0
-
-data_parts_glob: journal_metrics_2025.part*.b64
 data_source_note: User-provided 2025 Journal Impact Factor workbook
 
 # Publication-tier bonus added after relevance screening.
@@ -23,5 +21,122 @@ tiers:
   - min_if: 0
     score: 1
 
-# Optional manual overrides. Entries here take precedence over the imported table.
-journals: {}
+# Curated 2025 JIF values used by StatGen Radar. Journal names are normalized
+# case-insensitively; aliases cover common Crossref/RSS naming variants.
+journals:
+  Nature:
+    impact_factor: 56.1
+    aliases: [NATURE]
+    source_note: User-provided 2025 JIF workbook
+  Nature Genetics:
+    impact_factor: 25.5
+    aliases: [NAT GENET]
+    source_note: User-provided 2025 JIF workbook
+  Nature Computational Science:
+    impact_factor: 20.3
+    aliases: [NAT COMPUT SCI]
+    source_note: User-provided 2025 JIF workbook
+  Nature Communications:
+    impact_factor: 18.1
+    aliases: [NAT COMMUN]
+    source_note: User-provided 2025 JIF workbook
+  Genome Biology:
+    impact_factor: 9.2
+    aliases: [GENOME BIOL]
+    source_note: User-provided 2025 JIF workbook
+  Briefings in Bioinformatics:
+    impact_factor: 7.3
+    aliases: [BRIEF BIOINFORM]
+    source_note: User-provided 2025 JIF workbook
+  American Journal of Human Genetics:
+    impact_factor: 7.7
+    aliases: [AM J HUM GENET]
+    source_note: User-provided 2025 JIF workbook
+  PLOS Genetics:
+    impact_factor: 3.9
+    aliases: [PLOS GENET, PLoS Genetics]
+    source_note: User-provided 2025 JIF workbook
+  Human Molecular Genetics:
+    impact_factor: 3.1
+    aliases: [HUM MOL GENET]
+    source_note: User-provided 2025 JIF workbook
+  GENETICS:
+    impact_factor: 6.5
+    aliases: [GENETICS]
+    source_note: User-provided 2025 JIF workbook
+  Genetics Selection Evolution:
+    impact_factor: 4.4
+    aliases: [GENET SEL EVOL]
+    source_note: User-provided 2025 JIF workbook
+  Neuropsychopharmacology:
+    impact_factor: 7.6
+    aliases: [NEUROPSYCHOPHARMACOL]
+    source_note: User-provided 2025 JIF workbook
+  Translational Psychiatry:
+    impact_factor: 7.5
+    aliases: [TRANSL PSYCHIAT]
+    source_note: User-provided 2025 JIF workbook
+  Frontiers in Immunology:
+    impact_factor: 7.0
+    aliases: [FRONT IMMUNOL]
+    source_note: User-provided 2025 JIF workbook
+  npj Precision Oncology:
+    impact_factor: 9.9
+    aliases: [NPJ PRECIS ONCOL]
+    source_note: User-provided 2025 JIF workbook
+  Journal of Environmental Biology:
+    impact_factor: 1.0
+    aliases: [J ENVIRON BIOL]
+    source_note: User-provided 2025 JIF workbook
+  European Journal of Preventive Cardiology:
+    impact_factor: 10.0
+    aliases: [EUR J PREV CARDIOL]
+    source_note: User-provided 2025 JIF workbook
+  Frontiers in Cardiovascular Medicine:
+    impact_factor: 3.0
+    aliases: [FRONT CARDIOVASC MED]
+    source_note: User-provided 2025 JIF workbook
+  Circulation:
+    impact_factor: 41.3
+    aliases: [CIRCULATION]
+    source_note: User-provided 2025 JIF workbook
+  European Heart Journal:
+    impact_factor: 45.3
+    aliases: [EUR HEART J]
+    source_note: User-provided 2025 JIF workbook
+  JACC-Journal of the American College of Cardiology:
+    impact_factor: 22.3
+    aliases: [Journal of the American College of Cardiology, J AM COLL CARDIOL]
+    source_note: User-provided 2025 JIF workbook
+  JACC: CardioOncology:
+    impact_factor: 15.5
+    aliases: [JACC-CARDIOONCOL]
+    source_note: User-provided 2025 JIF workbook
+  Cancer Research:
+    impact_factor: 22.6
+    aliases: [CANCER RES]
+    source_note: User-provided 2025 JIF workbook
+  Journal of the American Statistical Association:
+    impact_factor: 4.0
+    aliases: [J AM STAT ASSOC]
+    source_note: User-provided 2025 JIF workbook
+  Nutrients:
+    impact_factor: 5.8
+    aliases: [NUTRIENTS]
+    source_note: User-provided 2025 JIF workbook
+  World Journal of Gastroenterology:
+    impact_factor: 7.7
+    aliases: [WORLD J GASTROENTERO]
+    source_note: User-provided 2025 JIF workbook
+  Naunyn-Schmiedebergs Archives of Pharmacology:
+    impact_factor: 4.0
+    aliases: ["Naunyn-Schmiedeberg's Archives of Pharmacology", N-S ARCH PHARMACOL]
+    source_note: User-provided 2025 JIF workbook
+  Genes:
+    impact_factor: 3.1
+    aliases: [GENES-BASEL]
+    source_note: User-provided 2025 JIF workbook
+  Journal of Applied Gerontology:
+    impact_factor: 2.0
+    aliases: [J APPL GERONTOL]
+    source_note: User-provided 2025 JIF workbook
