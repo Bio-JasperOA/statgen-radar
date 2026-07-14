@@ -108,7 +108,7 @@ journals:
     impact_factor: 22.3
     aliases: [Journal of the American College of Cardiology, J AM COLL CARDIOL]
     source_note: User-provided 2025 JIF workbook
-  JACC: CardioOncology:
+  "JACC: CardioOncology":
     impact_factor: 15.5
     aliases: [JACC-CARDIOONCOL]
     source_note: User-provided 2025 JIF workbook
