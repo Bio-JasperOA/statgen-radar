@@ -1,0 +1,1 @@
+Trigger daily StatGen Radar run after configuring WEBSITE_REPO_TOKEN.
