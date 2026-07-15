@@ -1,0 +1,1 @@
+Trigger daily StatGen Radar website publishing after WEBSITE_REPO_TOKEN permission update.
