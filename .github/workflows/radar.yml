@@ -82,18 +82,16 @@ jobs:
               git rebase origin/main
             done
           fi
-      - name: Check website publishing token
+      - name: Validate website publishing token
         if: steps.config.outputs.mode == 'daily'
         shell: bash
         run: |
           if [[ -z "$WEBSITE_REPO_TOKEN" ]]; then
-            echo "WEBSITE_REPO_TOKEN is not configured; skipping website publication."
-            echo "publish_website=false" >> "$GITHUB_ENV"
-          else
-            echo "publish_website=true" >> "$GITHUB_ENV"
+            echo "::error::WEBSITE_REPO_TOKEN is missing. The Radar report was generated, but it cannot be published to the academic website."
+            exit 1
           fi
       - name: Checkout academic website
-        if: steps.config.outputs.mode == 'daily' && env.publish_website == 'true'
+        if: steps.config.outputs.mode == 'daily'
         uses: actions/checkout@v7
         with:
           repository: Bio-JasperOA/Bio-JasperOA.github.io
@@ -101,7 +99,7 @@ jobs:
           path: website
           fetch-depth: 0
       - name: Publish daily brief to website
-        if: steps.config.outputs.mode == 'daily' && env.publish_website == 'true'
+        if: steps.config.outputs.mode == 'daily'
         shell: bash
         run: |
           REPORT=$(find reports/daily -maxdepth 1 -name '*.md' -type f | sort | tail -n 1)
