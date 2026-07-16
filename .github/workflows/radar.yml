@@ -112,7 +112,7 @@ jobs:
 
           git -C website config user.name "statgen-radar[bot]"
           git -C website config user.email "statgen-radar@users.noreply.github.com"
-          git -C website add statgen-radar/reports data/statgen-radar.json
+          git -C website add statgen-radar/reports data/statgen-radar.json data/statgen-radar-journals.json
 
           if git -C website diff --cached --quiet; then
             echo "Website is already up to date"
