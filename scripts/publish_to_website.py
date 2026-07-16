@@ -40,6 +40,23 @@ def numeric_value(value: str) -> float | None:
     return float(match.group()) if match else None
 
 
+def impact_factor_value(value: str) -> float | None:
+    text = (value or "").strip()
+    if not text:
+        return None
+    if re.search(r"\b(?:n/?a|not\s+available|not\s+applicable|not\s+configured|unknown|unmatched|missing|preprint)\b", text, re.I):
+        return None
+    if text in {"—", "-"}:
+        return None
+    match = re.match(r"^\s*(\d+(?:\.\d+)?)\b", text)
+    if not match:
+        return None
+    value_number = float(match.group(1))
+    if value_number >= 100:
+        return None
+    return value_number
+
+
 def parse_inclusion_table(text: str, inclusion_date: str) -> list[dict]:
     lines = text.splitlines()
     records: list[dict] = []
@@ -68,6 +85,7 @@ def parse_inclusion_table(text: str, inclusion_date: str) -> list[dict]:
             doi = row.get("DOI", "").strip()
             jif_text = row.get("2025 JIF", row.get("JIF", "")).strip()
             total_text = row.get("Total", "").strip()
+            jif = impact_factor_value(jif_text)
             records.append(
                 {
                     "inclusion_date": inclusion_date,
@@ -75,8 +93,8 @@ def parse_inclusion_table(text: str, inclusion_date: str) -> list[dict]:
                     "journal": journal,
                     "doi": doi,
                     "score": numeric_value(total_text),
-                    "impact_factor": numeric_value(jif_text),
-                    "impact_factor_label": jif_text,
+                    "impact_factor": jif,
+                    "impact_factor_label": str(jif).rstrip("0").rstrip(".") if jif is not None else "NA",
                     "published": row.get("Published", "").strip(),
                     "brief_url": f"/statgen-radar/article.html?date={inclusion_date}",
                 }
@@ -101,8 +119,9 @@ def build_journal_index(reports_dir: Path) -> list[dict]:
     rows = list(by_key.values())
     rows.sort(
         key=lambda row: (
-            -(row["impact_factor"] if row["impact_factor"] is not None else -1),
             -(row["score"] if row["score"] is not None else -1),
+            row["impact_factor"] is None,
+            -(row["impact_factor"] if row["impact_factor"] is not None else -1),
             row["journal"].lower(),
             row["article"].lower(),
         )
