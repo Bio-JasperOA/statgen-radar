@@ -1,0 +1,1 @@
+Rebuild cumulative StatGen Radar journal index after adding the Indexed Journal Articles module.
