@@ -3,6 +3,10 @@ core:
   gwas: 6
   statistical genetics: 6
   genetic association: 5
+  genetic discovery: 5
+  genomics: 3
+  human genetics: 4
+  complex trait: 4
   summary statistics: 4
 methods:
   fine-mapping: 4
@@ -17,6 +21,14 @@ methods:
   trans-ancestry: 3
   multi-ancestry: 3
   pleiotropy: 3
+  bayesian framework: 3
+  bayesian model: 3
+  longitudinal model: 3
+  longitudinal phenotype: 4
+  longitudinal phenotyping: 4
+  electronic health record: 4
+  electronic health records: 4
+  ehr: 2
 functional:
   eqtl: 3
   sqtl: 3
@@ -24,6 +36,8 @@ functional:
   twas: 3
   variant-to-gene: 3
   functional genomics: 2
+  regulatory genomics: 3
+  single-cell genomics: 3
 emerging:
   whole-genome sequencing: 2
   long-read sequencing: 2
@@ -32,7 +46,10 @@ emerging:
   single-cell genetics: 3
   spatial qtl: 3
   deep learning genetics: 3
+  machine learning genetics: 3
   foundation model genomics: 3
+  bioinformatics: 3
+  computational genomics: 3
 project_priority:
   cancer: 2
   cardiovascular: 2
