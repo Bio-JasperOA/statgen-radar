@@ -1,39 +1,18 @@
-name: StatGen Radar
+name: StatGen Radar Retrospective 2026-07-15
 
 on:
-  workflow_dispatch:
-    inputs:
-      mode:
-        description: Report mode
-        required: true
-        default: daily
-        type: choice
-        options: [daily, weekly]
-      days:
-        description: Lookback days
-        required: true
-        default: "1"
   push:
     branches: [main]
-    paths-ignore:
-      - "reports/**"
-      - "data/**"
-  schedule:
-    - cron: "0 0 * * *"
-    - cron: "15 0 * * 1"
+    paths:
+      - "scripts/retro_2026_07_15.py"
+      - ".github/workflows/radar.yml"
 
 permissions:
   contents: write
 
-concurrency:
-  group: statgen-radar-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
-  radar:
+  retrospective:
     runs-on: ubuntu-latest
-    env:
-      WEBSITE_REPO_TOKEN: ${{ secrets.WEBSITE_REPO_TOKEN }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -43,82 +22,17 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.txt
-      - name: Resolve run mode
-        id: config
-        shell: bash
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "mode=${{ inputs.mode }}" >> "$GITHUB_OUTPUT"
-            echo "days=${{ inputs.days }}" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ github.event.schedule }}" == "15 0 * * 1" ]]; then
-            echo "mode=weekly" >> "$GITHUB_OUTPUT"
-            echo "days=7" >> "$GITHUB_OUTPUT"
-          else
-            echo "mode=daily" >> "$GITHUB_OUTPUT"
-            echo "days=1" >> "$GITHUB_OUTPUT"
-          fi
-      - name: Run radar
-        run: python run_ranked_with_tsv.py --mode "${{ steps.config.outputs.mode }}" --days "${{ steps.config.outputs.days }}"
-      - name: Add complete inclusion table
-        run: python add_inclusion_table.py --mode "${{ steps.config.outputs.mode }}"
-      - name: Commit reports
+      - name: Run modified Radar for 2026-07-15
+        run: python scripts/retro_2026_07_15.py
+      - name: Commit retrospective report only
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add reports data/literature.db
+          git add reports/retrospective/2026-07-15.md
           if git diff --cached --quiet; then
-            echo "No Radar changes to commit"
-          else
-            git commit -m "chore: update literature brief"
-
-            for attempt in 1 2 3; do
-              if git push origin HEAD:main; then
-                break
-              fi
-
-              echo "Push attempt $attempt failed; rebasing onto latest origin/main"
-              git fetch origin main
-              git rebase origin/main
-            done
-          fi
-      - name: Validate website publishing token
-        if: steps.config.outputs.mode == 'daily'
-        shell: bash
-        run: |
-          if [[ -z "$WEBSITE_REPO_TOKEN" ]]; then
-            echo "::error::WEBSITE_REPO_TOKEN is missing. The Radar report was generated, but it cannot be published to the academic website."
+            echo "No report generated"
             exit 1
           fi
-      - name: Checkout academic website
-        if: steps.config.outputs.mode == 'daily'
-        uses: actions/checkout@v7
-        with:
-          repository: Bio-JasperOA/Bio-JasperOA.github.io
-          token: ${{ secrets.WEBSITE_REPO_TOKEN }}
-          path: website
-          fetch-depth: 0
-      - name: Publish daily brief to website
-        if: steps.config.outputs.mode == 'daily'
-        shell: bash
-        run: |
-          REPORT=$(find reports/daily -maxdepth 1 -name '*.md' -type f | sort | tail -n 1)
-          if [[ -z "$REPORT" ]]; then
-            echo "No daily report found"
-            exit 1
-          fi
-
-          python scripts/publish_to_website.py "$REPORT" website
-
-          git -C website config user.name "statgen-radar[bot]"
-          git -C website config user.email "statgen-radar@users.noreply.github.com"
-          git -C website add statgen-radar/reports data/statgen-radar.json data/statgen-radar-journals.json
-
-          if git -C website diff --cached --quiet; then
-            echo "Website is already up to date"
-            exit 0
-          fi
-
-          DATE=$(basename "$REPORT" .md)
-          git -C website commit -m "content: publish StatGen Radar brief ${DATE}"
-          git -C website push origin HEAD:main
+          git commit -m "report: retrospective StatGen Radar for 2026-07-15"
+          git push origin HEAD:main
