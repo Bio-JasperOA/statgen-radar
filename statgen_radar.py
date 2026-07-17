@@ -21,7 +21,7 @@ from dateutil import parser as dtparser
 
 ROOT = Path(__file__).resolve().parent
 DB_PATH = ROOT / "data" / "literature.db"
-UA = {"User-Agent": "StatGen-Radar/0.2 (academic literature monitor; contact via GitHub)"}
+UA = {"User-Agent": "StatGen-Radar/0.3 (academic literature monitor; contact via GitHub)"}
 
 RSS_SOURCES = {
     "Nature Genetics": "https://www.nature.com/ng.rss",
@@ -31,16 +31,37 @@ RSS_SOURCES = {
 }
 
 SEARCH_TERMS = [
-    '"genome-wide association"',
-    "GWAS",
-    '"statistical genetics"',
-    '"Mendelian randomization"',
-    '"genetic correlation"',
-    '"polygenic risk score"',
-    '"fine-mapping"',
-    "colocalization",
+    '"genome-wide association"', "GWAS", '"statistical genetics"',
+    '"genetic association"', '"genetic discovery"', "genomics",
+    '"Mendelian randomization"', '"genetic correlation"',
+    '"polygenic risk score"', '"fine-mapping"', "colocalization",
+    '"rare variant"', "heritability", "pleiotropy", "eQTL", "sQTL",
+    "TWAS", '"electronic health record"', '"electronic health records"',
+    '"longitudinal phenotype"', '"longitudinal phenotyping"',
+    '"Bayesian framework"', '"machine learning"', "bioinformatics",
 ]
 
+PRIORITY_EXACT_JOURNALS = {
+    "plos genetics",
+    "briefings in bioinformatics",
+    "bioinformatics",
+    "bioinformatics advances",
+    "nar genomics and bioinformatics",
+    "genome biology",
+    "genome medicine",
+    "the american journal of human genetics",
+    "american journal of human genetics",
+    "human molecular genetics",
+    "genetic epidemiology",
+    "european journal of human genetics",
+    "nature reviews genetics",
+}
+
+PRIORITY_FAMILY_ROOTS = ("nature", "cell", "science")
+PRIORITY_CROSSREF_QUERIES = [
+    "Nature", "Cell", "Science", "PLOS Genetics",
+    "Briefings in Bioinformatics", "Bioinformatics",
+]
 PREPRINT_SOURCES = {"arXiv", "biorxiv", "medrxiv"}
 
 
@@ -64,6 +85,10 @@ class Article:
     @property
     def record_type(self) -> str:
         return "Preprint" if self.source in PREPRINT_SOURCES else "Journal article"
+
+    @property
+    def journal(self) -> str:
+        return self.source.split(" / ", 1)[1] if " / " in self.source else self.source
 
 
 def normalize(text: str) -> str:
@@ -94,6 +119,13 @@ def within_days(value: str, days: int) -> bool:
     return not dt or dt >= datetime.now(timezone.utc) - timedelta(days=days)
 
 
+def is_priority_journal(name: str) -> bool:
+    n = normalize(name)
+    if n in PRIORITY_EXACT_JOURNALS:
+        return True
+    return any(n == root or n.startswith(root + " ") for root in PRIORITY_FAMILY_ROOTS)
+
+
 def load_keywords() -> dict[str, int]:
     with open(ROOT / "config" / "keywords.yml", encoding="utf-8") as handle:
         groups = yaml.safe_load(handle)
@@ -104,12 +136,15 @@ def score_article(article: Article, keywords: dict[str, int]) -> Article:
     text = f"{article.title} {article.abstract}".lower()
     matches = [(term, weight) for term, weight in keywords.items() if term in text]
     article.score = sum(weight for _, weight in matches)
+    if is_priority_journal(article.journal) and matches:
+        article.score += 2
+        matches.append(("priority journal", 2))
     article.matched_terms = ", ".join(term for term, _ in sorted(matches, key=lambda x: -x[1]))
     return article
 
 
 def collect_rss(days: int) -> list[Article]:
-    rows: list[Article] = []
+    rows = []
     for source, url in RSS_SOURCES.items():
         try:
             feed = feedparser.parse(url, request_headers=UA)
@@ -121,12 +156,8 @@ def collect_rss(days: int) -> list[Article]:
                     continue
                 doi = clean(e.get("prism_doi", "") or e.get("dc_identifier", ""))
                 rows.append(Article(
-                    source,
-                    clean(e.get("title", "")),
-                    clean(e.get("summary", "")),
-                    clean(e.get("author", "")),
-                    published,
-                    e.get("link", ""),
+                    source, clean(e.get("title", "")), clean(e.get("summary", "")),
+                    clean(e.get("author", "")), published, e.get("link", ""),
                     normalize_doi(doi),
                 ))
         except Exception as exc:
@@ -135,28 +166,21 @@ def collect_rss(days: int) -> list[Article]:
 
 
 def collect_arxiv(days: int) -> list[Article]:
-    query = quote('all:"genome-wide association" OR all:GWAS OR all:"statistical genetics"')
+    query = quote('all:"genome-wide association" OR all:GWAS OR all:"statistical genetics" OR all:genomics')
     url = (
         "https://export.arxiv.org/api/query?"
-        f"search_query={query}&start=0&max_results=100&sortBy=submittedDate&sortOrder=descending"
+        f"search_query={query}&start=0&max_results=150&sortBy=submittedDate&sortOrder=descending"
     )
     try:
         response = requests.get(url, headers=UA, timeout=30)
         response.raise_for_status()
         feed = feedparser.parse(response.text)
-        rows = []
-        for e in feed.entries:
-            published = e.get("published", "")
-            if within_days(published, days):
-                rows.append(Article(
-                    "arXiv",
-                    clean(e.title),
-                    clean(e.summary),
+        return [
+            Article("arXiv", clean(e.title), clean(e.summary),
                     ", ".join(a.name for a in e.get("authors", [])),
-                    published,
-                    e.get("link", ""),
-                ))
-        return rows
+                    e.get("published", ""), e.get("link", ""))
+            for e in feed.entries if within_days(e.get("published", ""), days)
+        ]
     except Exception as exc:
         print(f"WARN arXiv: {exc}", file=sys.stderr)
         return []
@@ -166,21 +190,16 @@ def collect_rxiv(server: str, days: int) -> list[Article]:
     end = datetime.now(timezone.utc).date()
     start = end - timedelta(days=days)
     url = f"https://api.biorxiv.org/details/{server}/{start}/{end}/0"
-    rows: list[Article] = []
+    rows = []
     try:
         response = requests.get(url, headers=UA, timeout=40)
         response.raise_for_status()
-        data = response.json()
-        for item in data.get("collection", []):
+        for item in response.json().get("collection", []):
             doi = normalize_doi(item.get("doi", ""))
             rows.append(Article(
-                server,
-                clean(item.get("title", "")),
-                clean(item.get("abstract", "")),
-                clean(item.get("authors", "")),
-                item.get("date", ""),
-                f"https://doi.org/{doi}" if doi else "",
-                doi,
+                server, clean(item.get("title", "")), clean(item.get("abstract", "")),
+                clean(item.get("authors", "")), item.get("date", ""),
+                f"https://doi.org/{doi}" if doi else "", doi,
             ))
     except Exception as exc:
         print(f"WARN {server}: {exc}", file=sys.stderr)
@@ -188,59 +207,36 @@ def collect_rxiv(server: str, days: int) -> list[Article]:
 
 
 def collect_europe_pmc(days: int) -> list[Article]:
-    """Collect indexed journal articles from PubMed/PMC via Europe PMC."""
     end = datetime.now(timezone.utc).date()
     start = end - timedelta(days=days)
     topic_query = " OR ".join(f"TITLE_ABS:{term}" for term in SEARCH_TERMS)
     query = f"({topic_query}) AND FIRST_PDATE:[{start} TO {end}] AND (SRC:MED OR SRC:PMC)"
-    params = {
-        "query": query,
-        "format": "json",
-        "resultType": "core",
-        "pageSize": 1000,
-        "sort": "FIRST_PDATE_D",
-    }
-    rows: list[Article] = []
+    params = {"query": query, "format": "json", "resultType": "core",
+              "pageSize": 1000, "sort": "FIRST_PDATE_D"}
+    rows = []
     try:
         response = requests.get(
             "https://www.ebi.ac.uk/europepmc/webservices/rest/search",
-            params=params,
-            headers=UA,
-            timeout=60,
+            params=params, headers=UA, timeout=60,
         )
         response.raise_for_status()
-        data = response.json()
-        for item in data.get("resultList", {}).get("result", []):
+        for item in response.json().get("resultList", {}).get("result", []):
             title = clean(item.get("title", ""))
             if not title:
                 continue
             doi = normalize_doi(item.get("doi", ""))
-            pmid = clean(item.get("pmid", ""))
-            pmcid = clean(item.get("pmcid", ""))
+            pmid, pmcid = clean(item.get("pmid", "")), clean(item.get("pmcid", ""))
             journal = clean(item.get("journalTitle", ""))
-            source = f"Europe PMC / {journal}" if journal else "Europe PMC"
-            published = (
-                item.get("firstPublicationDate")
-                or item.get("electronicPublicationDate")
-                or item.get("journalInfo", {}).get("printPublicationDate")
-                or ""
-            )
-            if pmid:
-                url = f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/"
-            elif pmcid:
-                url = f"https://europepmc.org/article/PMC/{pmcid}"
-            elif doi:
-                url = f"https://doi.org/{doi}"
-            else:
-                url = ""
+            published = (item.get("firstPublicationDate")
+                         or item.get("electronicPublicationDate")
+                         or item.get("journalInfo", {}).get("printPublicationDate") or "")
+            url = (f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/" if pmid
+                   else f"https://europepmc.org/article/PMC/{pmcid}" if pmcid
+                   else f"https://doi.org/{doi}" if doi else "")
             rows.append(Article(
-                source,
-                title,
-                clean(item.get("abstractText", "")),
-                clean(item.get("authorString", "")),
-                published,
-                url,
-                doi,
+                f"Europe PMC / {journal}" if journal else "Europe PMC",
+                title, clean(item.get("abstractText", "")),
+                clean(item.get("authorString", "")), published, url, doi,
             ))
     except Exception as exc:
         print(f"WARN Europe PMC: {exc}", file=sys.stderr)
@@ -256,62 +252,72 @@ def crossref_date(item: dict) -> str:
     return ""
 
 
+def article_from_crossref(item: dict) -> Article | None:
+    title_values = item.get("title", [])
+    title = clean(title_values[0] if title_values else "")
+    if not title:
+        return None
+    doi = normalize_doi(item.get("DOI", ""))
+    authors = ", ".join(
+        clean(" ".join(filter(None, [a.get("given", ""), a.get("family", "")])))
+        for a in item.get("author", [])
+    )
+    container = item.get("container-title", [])
+    journal = clean(container[0] if container else "")
+    return Article(
+        f"Crossref / {journal}" if journal else "Crossref", title,
+        clean(item.get("abstract", "")), authors, crossref_date(item),
+        item.get("URL", "") or (f"https://doi.org/{doi}" if doi else ""), doi,
+    )
+
+
+def crossref_request(params: dict, label: str) -> list[Article]:
+    rows = []
+    try:
+        response = requests.get("https://api.crossref.org/works", params=params, headers=UA, timeout=60)
+        response.raise_for_status()
+        for item in response.json().get("message", {}).get("items", []):
+            article = article_from_crossref(item)
+            if article:
+                rows.append(article)
+    except Exception as exc:
+        print(f"WARN Crossref ({label}): {exc}", file=sys.stderr)
+    return rows
+
+
 def collect_crossref(days: int) -> list[Article]:
-    """Supplement online-first journal records that may not yet be indexed in PubMed."""
     end = datetime.now(timezone.utc).date()
     start = end - timedelta(days=days)
-    rows: list[Article] = []
-    seen: set[str] = set()
+    select = "DOI,title,abstract,author,published-online,published-print,published,issued,created,URL,container-title"
+    rows = []
     queries = [
-        "genome-wide association GWAS statistical genetics",
+        "genome-wide association GWAS statistical genetics genetic discovery",
         "Mendelian randomization genetic correlation polygenic risk score",
-        "fine-mapping colocalization genetic association",
+        "fine-mapping colocalization rare variant heritability",
+        "genomics bioinformatics electronic health records longitudinal phenotype Bayesian",
     ]
     for query_text in queries:
-        params = {
+        rows.extend(crossref_request({
             "query.bibliographic": query_text,
             "filter": f"from-pub-date:{start},until-pub-date:{end},type:journal-article",
-            "sort": "published",
-            "order": "desc",
-            "rows": 200,
-            "select": "DOI,title,abstract,author,published-online,published-print,published,issued,created,URL,container-title",
-        }
-        try:
-            response = requests.get(
-                "https://api.crossref.org/works",
-                params=params,
-                headers=UA,
-                timeout=60,
-            )
-            response.raise_for_status()
-            for item in response.json().get("message", {}).get("items", []):
-                title_values = item.get("title", [])
-                title = clean(title_values[0] if title_values else "")
-                if not title:
-                    continue
-                doi = normalize_doi(item.get("DOI", ""))
-                key = doi or normalize(title)
-                if key in seen:
-                    continue
-                seen.add(key)
-                authors = ", ".join(
-                    clean(" ".join(filter(None, [a.get("given", ""), a.get("family", "")])))
-                    for a in item.get("author", [])
-                )
-                container = item.get("container-title", [])
-                journal = clean(container[0] if container else "")
-                source = f"Crossref / {journal}" if journal else "Crossref"
-                rows.append(Article(
-                    source,
-                    title,
-                    clean(item.get("abstract", "")),
-                    authors,
-                    crossref_date(item),
-                    item.get("URL", "") or (f"https://doi.org/{doi}" if doi else ""),
-                    doi,
-                ))
-        except Exception as exc:
-            print(f"WARN Crossref ({query_text}): {exc}", file=sys.stderr)
+            "sort": "published", "order": "desc", "rows": 300, "select": select,
+        }, query_text))
+    return rows
+
+
+def collect_priority_journals(days: int) -> list[Article]:
+    """Dedicated Crossref sweep for Cell, Nature, Science families and core field journals."""
+    end = datetime.now(timezone.utc).date()
+    start = end - timedelta(days=days)
+    select = "DOI,title,abstract,author,published-online,published-print,published,issued,created,URL,container-title"
+    rows = []
+    for journal_query in PRIORITY_CROSSREF_QUERIES:
+        candidates = crossref_request({
+            "query.container-title": journal_query,
+            "filter": f"from-pub-date:{start},until-pub-date:{end},type:journal-article",
+            "sort": "published", "order": "desc", "rows": 1000, "select": select,
+        }, f"priority journal {journal_query}")
+        rows.extend(a for a in candidates if is_priority_journal(a.journal))
     return rows
 
 
@@ -331,10 +337,8 @@ def save(con: sqlite3.Connection, articles: Iterable[Article]) -> int:
     for a in articles:
         cur = con.execute(
             """INSERT OR IGNORE INTO articles VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
-            (
-                a.uid, a.source, a.title, a.abstract, a.authors, a.published, a.url, a.doi,
-                a.score, a.matched_terms, datetime.now(timezone.utc).isoformat(),
-            ),
+            (a.uid, a.source, a.title, a.abstract, a.authors, a.published, a.url,
+             a.doi, a.score, a.matched_terms, datetime.now(timezone.utc).isoformat()),
         )
         inserted += cur.rowcount
     con.commit()
@@ -342,28 +346,18 @@ def save(con: sqlite3.Connection, articles: Iterable[Article]) -> int:
 
 
 def deduplicate(articles: Iterable[Article]) -> list[Article]:
-    """Prefer journal records and richer metadata when sources overlap."""
-    unique: dict[str, Article] = {}
+    unique = {}
     for article in articles:
-        key = article.uid
-        current = unique.get(key)
+        current = unique.get(article.uid)
         if current is None:
-            unique[key] = article
+            unique[article.uid] = article
             continue
-        current_quality = (
-            current.record_type == "Journal article",
-            bool(current.abstract),
-            len(current.abstract),
-            bool(current.doi),
-        )
-        new_quality = (
-            article.record_type == "Journal article",
-            bool(article.abstract),
-            len(article.abstract),
-            bool(article.doi),
-        )
+        current_quality = (current.record_type == "Journal article", bool(current.abstract),
+                           len(current.abstract), bool(current.doi), is_priority_journal(current.journal))
+        new_quality = (article.record_type == "Journal article", bool(article.abstract),
+                       len(article.abstract), bool(article.doi), is_priority_journal(article.journal))
         if new_quality > current_quality:
-            unique[key] = article
+            unique[article.uid] = article
     return list(unique.values())
 
 
@@ -376,20 +370,16 @@ def report(articles: list[Article], mode: str, days: int) -> Path:
     type_counts = Counter(a.record_type for a in ranked)
     source_counts = Counter(a.source.split(" / ", 1)[0] for a in ranked)
     lines = [
-        f"# StatGen Radar — {mode.title()} Brief",
-        "",
+        f"# StatGen Radar — {mode.title()} Brief", "",
         f"Generated: {now.isoformat(timespec='minutes')}",
         f"Window: last {days} day(s)",
         f"Relevant records: {len(ranked)}",
         f"Journal articles: {type_counts.get('Journal article', 0)}",
-        f"Preprints: {type_counts.get('Preprint', 0)}",
-        "",
-        "## Source coverage",
-        "",
+        f"Preprints: {type_counts.get('Preprint', 0)}", "",
+        "## Source coverage", "",
     ]
-    if source_counts:
-        lines.extend(f"- **{source}:** {count}" for source, count in source_counts.most_common())
-    else:
+    lines.extend(f"- **{source}:** {count}" for source, count in source_counts.most_common())
+    if not source_counts:
         lines.append("No source returned a record above the relevance threshold.")
     lines += ["", "## Priority reading", ""]
     if not ranked:
@@ -397,19 +387,17 @@ def report(articles: list[Article], mode: str, days: int) -> Path:
     for i, a in enumerate(ranked, 1):
         excerpt = a.abstract[:700] + ("…" if len(a.abstract) > 700 else "")
         lines += [
-            f"### {i}. {a.title}",
-            "",
+            f"### {i}. {a.title}", "",
             f"- **Record type:** {a.record_type}",
             f"- **Source:** {a.source}",
+            f"- **Priority journal:** {'Yes' if is_priority_journal(a.journal) else 'No'}",
             f"- **Published:** {a.published or 'Unknown'}",
             f"- **Score:** {a.score}",
             f"- **Matched terms:** {a.matched_terms or 'None'}",
             f"- **Authors:** {a.authors or 'Not provided'}",
             f"- **DOI:** {a.doi or 'Not provided'}",
-            f"- **Link:** {a.url or 'Not provided'}",
-            "",
-            excerpt or "Abstract unavailable.",
-            "",
+            f"- **Link:** {a.url or 'Not provided'}", "",
+            excerpt or "Abstract unavailable.", "",
         ]
     path.write_text("\n".join(lines), encoding="utf-8")
     return path
@@ -425,6 +413,7 @@ def main() -> int:
     keywords = load_keywords()
     collectors = {
         "RSS": collect_rss(args.days),
+        "Priority journals": collect_priority_journals(args.days),
         "Europe PMC": collect_europe_pmc(args.days),
         "Crossref": collect_crossref(args.days),
         "arXiv": collect_arxiv(args.days),
