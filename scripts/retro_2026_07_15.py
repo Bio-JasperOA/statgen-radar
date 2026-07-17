@@ -5,17 +5,21 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
 import statgen_radar as radar
 import statgen_radar_ranked as ranked
 import run_ranked_with_tsv as ranked_tsv
 
 TARGET = datetime(2026, 7, 15, 23, 59, 59, tzinfo=timezone.utc)
-ROOT = Path(__file__).resolve().parents[1]
+
 
 class FixedDateTime(datetime):
     @classmethod
     def now(cls, tz=None):
         return TARGET if tz is not None else TARGET.replace(tzinfo=None)
+
 
 radar.datetime = FixedDateTime
 ranked.datetime = FixedDateTime
