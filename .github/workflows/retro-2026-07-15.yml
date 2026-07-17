@@ -1,0 +1,33 @@
+name: Retro 2026-07-15
+
+on:
+  push:
+    branches: [retro-2026-07-15]
+
+permissions:
+  contents: write
+
+jobs:
+  retrospective:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Run fixed-date retrospective
+        run: python scripts/retro_2026_07_15.py
+      - name: Commit retrospective report to branch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/retrospective/2026-07-15.md
+          if git diff --cached --quiet; then
+            echo "No report generated"
+            exit 1
+          fi
+          git commit -m "report: retrospective StatGen Radar for 2026-07-15"
+          git push origin HEAD:retro-2026-07-15
