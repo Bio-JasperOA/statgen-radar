@@ -199,6 +199,7 @@ def main() -> int:
     print(f"JIF lookup entries={len(metric_lookup)} metric_year={metric_config.get('metric_year', 'Unknown')}")
     collectors = {
         "RSS": radar.collect_rss(args.days),
+        "Priority journals": radar.collect_priority_journals(args.days),
         "Europe PMC": radar.collect_europe_pmc(args.days),
         "Crossref": radar.collect_crossref(args.days),
         "arXiv": radar.collect_arxiv(args.days),
