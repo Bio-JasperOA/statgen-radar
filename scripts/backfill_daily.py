@@ -2,15 +2,17 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 import add_inclusion_table
 import run_ranked_with_tsv as ranked_tsv
 import statgen_radar as radar
 import statgen_radar_ranked as ranked
-
-ROOT = Path(__file__).resolve().parents[1]
 
 
 def run_for_date(date_text: str, min_score: int) -> Path:
