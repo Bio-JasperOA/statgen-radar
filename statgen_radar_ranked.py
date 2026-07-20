@@ -88,7 +88,7 @@ def tier_score(impact_factor: float, tiers: list[dict]) -> int:
 
 def add_publication_score(article: radar.Article, config: dict, lookup: dict[str, dict]) -> radar.Article:
     article.relevance_score = article.score
-    article.journal = journal_name(article)
+    journal = journal_name(article)
     article.metric_name = config.get("metric_name", "Journal Impact Factor")
     article.metric_year = config.get("metric_year", "Unknown")
     article.impact_factor = None
@@ -98,7 +98,7 @@ def add_publication_score(article: radar.Article, config: dict, lookup: dict[str
         article.publication_score = int(config.get("preprint_publication_score", 3))
         article.publication_tier = "Preprint (uniform score)"
     else:
-        metric = lookup.get(normalize_journal(article.journal))
+        metric = lookup.get(normalize_journal(journal))
         if metric:
             article.impact_factor = float(metric["impact_factor"])
             article.metric_source = metric.get("source_note", "")
