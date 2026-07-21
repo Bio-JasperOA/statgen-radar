@@ -29,6 +29,16 @@ methods:
   electronic health record: 4
   electronic health records: 4
   ehr: 2
+  disease trajectory: 5
+  disease trajectories: 5
+  disease progression: 4
+  disease evolution: 4
+  disease dynamics: 4
+  temporal trajectory: 3
+  clinical trajectory: 4
+  multistate model: 3
+  state transition model: 3
+  survival trajectory: 3
 functional:
   eqtl: 3
   sqtl: 3
@@ -38,6 +48,17 @@ functional:
   functional genomics: 2
   regulatory genomics: 3
   single-cell genomics: 3
+  somatic mutation: 5
+  somatic mutations: 5
+  somatic variant: 4
+  somatic variants: 4
+  tumor evolution: 5
+  clonal evolution: 4
+  cancer evolution: 5
+  mutational signature: 4
+  mutational signatures: 4
+  mosaic mutation: 4
+  mosaicism: 3
 emerging:
   whole-genome sequencing: 2
   long-read sequencing: 2
@@ -50,6 +71,8 @@ emerging:
   foundation model genomics: 3
   bioinformatics: 3
   computational genomics: 3
+  multi-omics: 3
+  single-cell multiomics: 3
 project_priority:
   cancer: 2
   cardiovascular: 2
