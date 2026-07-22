@@ -19,7 +19,7 @@ on:
       - "reports/**"
       - "data/**"
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "55 23 * * *"
     - cron: "15 0 * * 1"
 
 permissions:
@@ -57,16 +57,6 @@ jobs:
             echo "mode=daily" >> "$GITHUB_OUTPUT"
             echo "days=1" >> "$GITHUB_OUTPUT"
           fi
-      - name: Run requested historical backfills
-        if: hashFiles('config/backfill_dates.txt') != ''
-        shell: bash
-        run: |
-          mapfile -t DATES < <(grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' config/backfill_dates.txt)
-          if [[ ${#DATES[@]} -eq 0 ]]; then
-            echo "No valid backfill dates found"
-            exit 1
-          fi
-          python scripts/backfill_daily.py "${DATES[@]}"
       - name: Run radar
         run: python run_ranked_with_tsv.py --mode "${{ steps.config.outputs.mode }}" --days "${{ steps.config.outputs.days }}"
       - name: Add complete inclusion table
@@ -76,17 +66,15 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A reports data/literature.db config/backfill_dates.txt .backfill_dates_done
+          git add -A reports data/literature.db
           if git diff --cached --quiet; then
             echo "No Radar changes to commit"
           else
             git commit -m "chore: update literature brief"
-
             for attempt in 1 2 3; do
               if git push origin HEAD:main; then
                 break
               fi
-
               echo "Push attempt $attempt failed; rebasing onto latest origin/main"
               git fetch origin main
               git rebase origin/main
@@ -108,37 +96,22 @@ jobs:
           token: ${{ secrets.WEBSITE_REPO_TOKEN }}
           path: website
           fetch-depth: 0
-      - name: Publish daily briefs to website
+      - name: Publish daily brief to website
         if: steps.config.outputs.mode == 'daily'
         shell: bash
         run: |
-          REPORTS=()
-          if [[ -f .backfill_dates_done ]]; then
-            while IFS= read -r DATE; do
-              [[ -n "$DATE" && -f "reports/daily/$DATE.md" ]] && REPORTS+=("reports/daily/$DATE.md")
-            done < .backfill_dates_done
-          fi
-
-          LATEST=$(find reports/daily -maxdepth 1 -name '*.md' -type f | sort | tail -n 1)
-          [[ -n "$LATEST" ]] && REPORTS+=("$LATEST")
-
-          if [[ ${#REPORTS[@]} -eq 0 ]]; then
-            echo "No daily reports found"
+          REPORT=$(find reports/daily -maxdepth 1 -name '*.md' -type f | sort | tail -n 1)
+          if [[ -z "$REPORT" ]]; then
+            echo "No daily report found"
             exit 1
           fi
-
-          for REPORT in "${REPORTS[@]}"; do
-            python scripts/publish_to_website.py "$REPORT" website
-          done
-
+          python scripts/publish_to_website.py "$REPORT" website
           git -C website config user.name "statgen-radar[bot]"
           git -C website config user.email "statgen-radar@users.noreply.github.com"
           git -C website add statgen-radar/reports data/statgen-radar.json data/statgen-radar-journals.json
-
           if git -C website diff --cached --quiet; then
             echo "Website is already up to date"
             exit 0
           fi
-
-          git -C website commit -m "content: publish StatGen Radar briefs"
+          git -C website commit -m "content: publish StatGen Radar brief"
           git -C website push origin HEAD:main
