@@ -16,6 +16,8 @@ import statgen_radar as radar
 
 ROOT = Path(__file__).resolve().parent
 METRICS_PATH = ROOT / "config" / "journal_metrics.yml"
+DEFAULT_MIN_RELEVANCE_SCORE = 10
+DEFAULT_MIN_PUBLICATION_SCORE = 4
 
 
 def normalize_journal(value: str) -> str:
@@ -95,7 +97,7 @@ def add_publication_score(article: radar.Article, config: dict, lookup: dict[str
     article.metric_source = ""
 
     if article.record_type == "Preprint":
-        article.publication_score = int(config.get("preprint_publication_score", 3))
+        article.publication_score = int(config.get("preprint_publication_score", 4))
         article.publication_tier = "Preprint (uniform score)"
     else:
         metric = lookup.get(normalize_journal(journal))
@@ -120,7 +122,16 @@ def metric_label(article: radar.Article) -> str:
     return f"{article.impact_factor:.1f} ({article.metric_year})"
 
 
-def report(articles: list[radar.Article], mode: str, days: int) -> Path:
+def report(
+    articles: list[radar.Article],
+    mode: str,
+    days: int,
+    *,
+    collected_count: int,
+    candidate_count: int,
+    min_relevance_score: int,
+    min_publication_score: int,
+) -> Path:
     now = datetime.now(timezone.utc)
     out_dir = ROOT / "reports" / ("weekly" if mode == "weekly" else "daily")
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -132,13 +143,17 @@ def report(articles: list[radar.Article], mode: str, days: int) -> Path:
     type_counts = Counter(a.record_type for a in ranked)
     source_counts = Counter(a.source.split(" / ", 1)[0] for a in ranked)
     configured_jif = sum(a.record_type == "Journal article" and a.impact_factor is not None for a in ranked)
+    filtered_out = candidate_count - len(ranked)
 
     lines = [
         f"# StatGen Radar — {mode.title()} Brief",
         "",
         f"Generated: {now.isoformat(timespec='minutes')}",
         f"Window: last {days} day(s)",
-        f"Relevant records: {len(ranked)}",
+        f"Collected records: {collected_count}",
+        f"Scored unique candidates: {candidate_count}",
+        f"Passed threshold: {len(ranked)}",
+        f"Filtered out: {filtered_out}",
         f"Journal articles: {type_counts.get('Journal article', 0)}",
         f"Preprints: {type_counts.get('Preprint', 0)}",
         f"Journal articles with configured JIF: {configured_jif}",
@@ -146,7 +161,7 @@ def report(articles: list[radar.Article], mode: str, days: int) -> Path:
         "## Scoring model",
         "",
         "Total score = relevance score + publication score.",
-        "Relevance screening is performed before publication-tier scoring.",
+        f"Eligibility requires relevance score >= {min_relevance_score} and publication score >= {min_publication_score}.",
         "Preprints receive a uniform publication score; journal articles receive a tiered score from configured JIF values.",
         "",
         "## Source coverage",
@@ -155,11 +170,11 @@ def report(articles: list[radar.Article], mode: str, days: int) -> Path:
     if source_counts:
         lines.extend(f"- **{source}:** {count}" for source, count in source_counts.most_common())
     else:
-        lines.append("No source returned a record above the relevance threshold.")
+        lines.append("No source returned a record above the eligibility thresholds.")
     lines += ["", "## Priority reading", ""]
 
     if not ranked:
-        lines.append("No records met the relevance threshold in this run.")
+        lines.append("No records met both eligibility thresholds in this run.")
 
     for index, article in enumerate(ranked, 1):
         excerpt = article.abstract[:700] + ("…" if len(article.abstract) > 700 else "")
@@ -191,7 +206,18 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--days", type=int, default=1)
     parser.add_argument("--mode", choices=["daily", "weekly"], default="daily")
-    parser.add_argument("--min-score", type=int, default=3, help="Minimum relevance score before publication bonus")
+    parser.add_argument(
+        "--min-score",
+        type=int,
+        default=DEFAULT_MIN_RELEVANCE_SCORE,
+        help="Minimum relevance score required for inclusion",
+    )
+    parser.add_argument(
+        "--min-publication-score",
+        type=int,
+        default=DEFAULT_MIN_PUBLICATION_SCORE,
+        help="Minimum publication score required for inclusion",
+    )
     args = parser.parse_args()
 
     keywords = radar.load_keywords()
@@ -211,17 +237,30 @@ def main() -> int:
 
     collected = [article for records in collectors.values() for article in records]
     scored = [radar.score_article(article, keywords) for article in collected if article.title]
-    relevant = [article for article in scored if article.score >= args.min_score]
-    unique = radar.deduplicate(relevant)
-    ranked = [add_publication_score(article, metric_config, metric_lookup) for article in unique]
+    unique = radar.deduplicate(scored)
+    candidates = [add_publication_score(article, metric_config, metric_lookup) for article in unique]
+    retained = [
+        article
+        for article in candidates
+        if article.relevance_score >= args.min_score
+        and article.publication_score >= args.min_publication_score
+    ]
 
     connection = radar.init_db()
-    inserted = radar.save(connection, ranked)
-    path = report(ranked, args.mode, args.days)
+    inserted = radar.save(connection, retained)
+    path = report(
+        retained,
+        args.mode,
+        args.days,
+        collected_count=len(collected),
+        candidate_count=len(candidates),
+        min_relevance_score=args.min_score,
+        min_publication_score=args.min_publication_score,
+    )
     print(
-        f"Collected={len(collected)} relevant={len(ranked)} "
-        f"journal={sum(a.record_type == 'Journal article' for a in ranked)} "
-        f"preprint={sum(a.record_type == 'Preprint' for a in ranked)} "
+        f"Collected={len(collected)} candidates={len(candidates)} retained={len(retained)} "
+        f"journal={sum(a.record_type == 'Journal article' for a in retained)} "
+        f"preprint={sum(a.record_type == 'Preprint' for a in retained)} "
         f"inserted={inserted} report={path}"
     )
     return 0
