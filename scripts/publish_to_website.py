@@ -156,17 +156,24 @@ def main() -> int:
     else:
         archive = []
 
-    included = parse_value(text, "Included records after quality control", 0)
+    journal_articles = parse_value(text, "Journal articles", 0)
+    preprints = parse_value(text, "Preprints", 0)
+
+    included = parse_value(text, "Passed threshold", 0)
+    if not included:
+        included = parse_value(text, "Included records after quality control", 0)
     if not included:
         included = parse_value(text, "Relevant records", 0)
+    if not included and (journal_articles or preprints):
+        included = journal_articles + preprints
 
     item = {
         "date": date,
         "title": "StatGen Radar — Daily Brief",
         "summary": executive_summary(text),
         "records": included,
-        "journal_articles": parse_value(text, "Journal articles", 0),
-        "preprints": parse_value(text, "Preprints", 0),
+        "journal_articles": journal_articles,
+        "preprints": preprints,
         "jif_edition": parse_value(text, "JIF edition", "2025"),
         "url": f"/statgen-radar/article.html?date={date}",
     }
