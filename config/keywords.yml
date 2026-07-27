@@ -79,3 +79,92 @@ project_priority:
   comorbidity: 2
   cross-trait: 2
   mediation: 2
+context_genetics:
+  gene-environment interaction: 5
+  gene environment interaction: 5
+  gxe interaction: 4
+  genome-wide interaction study: 5
+  interaction gwas: 5
+  context-dependent genetic effect: 5
+  context-specific genetic effect: 5
+  gene-context interaction: 5
+  gene-treatment interaction: 4
+  genotype-treatment interaction: 4
+  environment-treatment interaction: 3
+  polygenic risk by environment: 4
+  polygenic risk by disease state: 4
+genome_evolution:
+  germline variant: 3
+  germline mutation: 3
+  germline susceptibility: 4
+  germline-somatic interaction: 5
+  somatic-germline interaction: 5
+  somatic mosaicism: 4
+  clonal hematopoiesis: 5
+  clonal hematopoiesis of indeterminate potential: 5
+  therapy-related clonal hematopoiesis: 5
+  environmental mutagenesis: 4
+  somatic evolution: 5
+dynamic_qtl:
+  cell-state eqtl: 5
+  cell state eqtl: 5
+  context-specific eqtl: 5
+  cell-type-specific eqtl: 4
+  cell type specific eqtl: 4
+  response eqtl: 5
+  response-eqtl: 5
+  dynamic eqtl: 4
+  interaction eqtl: 4
+  single-cell eqtl: 4
+  single cell eqtl: 4
+  stimulation eqtl: 4
+  condition-specific eqtl: 4
+  caqtl: 3
+trajectory_methods:
+  multimorbidity trajectory: 5
+  genetically informed disease trajectory: 6
+  disease state transition: 5
+  transition-specific genetics: 6
+  transition-specific association: 5
+  multi-state model: 4
+  multi-state analysis: 4
+  illness-death model: 4
+  hidden markov model: 3
+  state-space model: 4
+  joint longitudinal survival model: 4
+  time-varying genetic effect: 5
+  dynamic prediction: 4
+  counterfactual trajectory: 5
+  patient trajectory: 4
+  longitudinal disease course: 4
+cardio_oncology:
+  cardio-oncology: 5
+  cardio oncology: 5
+  cancer cardiovascular comorbidity: 6
+  cancer cardiovascular disease: 5
+  cancer-cardiovascular trajectory: 6
+  cardiovascular cancer trajectory: 6
+  shared genetic architecture: 5
+  cross-disease genetic architecture: 5
+  clonal hematopoiesis cardiovascular: 6
+  cancer therapy cardiotoxicity: 4
+  treatment-related cardiotoxicity: 4
+  immune checkpoint inhibitor myocarditis: 3
+  cancer-associated thrombosis: 3
+integrative_methods:
+  local genetic correlation: 5
+  multivariate gwas: 4
+  cross-trait meta-analysis: 4
+  genomic sem: 5
+  genomic structural equation modeling: 5
+  latent causal variable: 4
+  polygenic overlap: 4
+  shared genetic liability: 4
+  longitudinal multi-omics: 4
+  multimodal longitudinal model: 4
+  disease foundation model: 5
+  human disease foundation model: 6
+  longitudinal transformer: 4
+  neural ode: 4
+  graph neural network disease trajectory: 4
+  digital twin disease model: 4
