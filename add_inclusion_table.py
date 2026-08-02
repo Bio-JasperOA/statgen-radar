@@ -18,6 +18,23 @@ def field(block: str, label: str, default: str = "—") -> str:
     return match.group(1).strip() if match else default
 
 
+def parse_count(text: str, label: str) -> int | None:
+    match = re.search(rf"^{re.escape(label)}:\s*(\d+)\s*$", text, flags=re.MULTILINE)
+    return int(match.group(1)) if match else None
+
+
+def expected_record_count(text: str) -> int | None:
+    for label in (
+        "Passed threshold",
+        "Included records after quality control",
+        "Relevant records",
+    ):
+        count = parse_count(text, label)
+        if count is not None:
+            return count
+    return None
+
+
 def parse_records(text: str) -> list[dict[str, str]]:
     pattern = re.compile(r"^###\s+\d+\.\s+(.+?)\n(.*?)(?=^###\s+\d+\.|\Z)", re.MULTILINE | re.DOTALL)
     records: list[dict[str, str]] = []
@@ -56,6 +73,22 @@ def build_table(records: list[dict[str, str]]) -> str:
     return "\n".join(lines)
 
 
+def build_empty_section() -> str:
+    return "\n".join([
+        "## Full inclusion table",
+        "",
+        "No records passed both eligibility thresholds in this run.",
+    ])
+
+
+def replace_inclusion_section(text: str, section: str) -> str:
+    text = re.sub(r"\n## Full inclusion table\n.*?(?=\n## |\Z)", "", text, flags=re.DOTALL)
+    marker = "\n## Priority reading\n"
+    if marker in text:
+        return text.replace(marker, f"\n{section}\n{marker}", 1)
+    return f"{text.rstrip()}\n\n{section}\n"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=["daily", "weekly"], default="daily")
@@ -66,16 +99,28 @@ def main() -> int:
     path = report_dir / f"{args.date}.md"
     text = path.read_text(encoding="utf-8")
     records = parse_records(text)
-    if not records:
-        raise ValueError(f"No article records could be parsed from {path}")
+    expected = expected_record_count(text)
 
-    text = re.sub(r"\n## Full inclusion table\n.*?(?=\n## |\Z)", "", text, flags=re.DOTALL)
-    table = build_table(records)
-    marker = "\n## Priority reading\n"
-    if marker in text:
-        text = text.replace(marker, f"\n{table}\n{marker}", 1)
-    else:
-        text = f"{text.rstrip()}\n\n{table}\n"
+    if not records:
+        if expected == 0:
+            text = replace_inclusion_section(text, build_empty_section())
+            path.write_text(text, encoding="utf-8")
+            print(f"Added empty inclusion section to zero-result report {path}")
+            return 0
+        if expected is None:
+            raise ValueError(
+                f"No article records could be parsed from {path}, and no report count field was found"
+            )
+        raise ValueError(
+            f"Report {path} declares {expected} included records, but no article records could be parsed"
+        )
+
+    if expected is not None and expected != len(records):
+        raise ValueError(
+            f"Report {path} declares {expected} included records, but {len(records)} article records were parsed"
+        )
+
+    text = replace_inclusion_section(text, build_table(records))
     path.write_text(text, encoding="utf-8")
     print(f"Added full inclusion table with {len(records)} records to {path}")
     return 0
