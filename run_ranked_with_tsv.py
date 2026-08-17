@@ -36,6 +36,42 @@ ADDITIONAL_CROSSREF_QUERIES = [
     "longitudinal multi-omics disease foundation model digital twin",
 ]
 
+# Core journals are swept directly by journal title instead of relying on topic
+# queries to happen to retrieve them. Entries here are normalized because
+# statgen_radar.is_priority_journal() compares normalized names.
+CORE_PRIORITY_JOURNALS = {
+    "the american journal of human genetics",
+    "american journal of human genetics",
+    "plos genetics",
+    "plos computational biology",
+    "bioinformatics",
+    "briefings in bioinformatics",
+    "bioinformatics advances",
+    "nar genomics and bioinformatics",
+    "genome biology",
+    "genome medicine",
+    "human molecular genetics",
+    "genetic epidemiology",
+    "european journal of human genetics",
+    "nature reviews genetics",
+}
+
+CORE_PRIORITY_CROSSREF_QUERIES = [
+    "The American Journal of Human Genetics",
+    "PLOS Genetics",
+    "PLOS Computational Biology",
+    "Bioinformatics",
+    "Briefings in Bioinformatics",
+    "Bioinformatics Advances",
+    "NAR Genomics and Bioinformatics",
+    "Genome Biology",
+    "Genome Medicine",
+    "Human Molecular Genetics",
+    "Genetic Epidemiology",
+    "European Journal of Human Genetics",
+    "Nature Reviews Genetics",
+]
+
 
 def load_tsv_rows(config: dict) -> list[dict]:
     if not TSV_PATH.exists():
@@ -96,6 +132,14 @@ def collect_crossref_expanded(days: int) -> list[ranked.radar.Article]:
 for search_term in ADDITIONAL_SEARCH_TERMS:
     if search_term not in ranked.radar.SEARCH_TERMS:
         ranked.radar.SEARCH_TERMS.append(search_term)
+
+# Expand the priority whitelist and the dedicated journal-title sweep used by
+# collect_priority_journals(). This makes AJHG, PLOS Computational Biology and
+# the other core journals first-class sources in every Radar run.
+ranked.radar.PRIORITY_EXACT_JOURNALS.update(CORE_PRIORITY_JOURNALS)
+for journal_query in CORE_PRIORITY_CROSSREF_QUERIES:
+    if journal_query not in ranked.radar.PRIORITY_CROSSREF_QUERIES:
+        ranked.radar.PRIORITY_CROSSREF_QUERIES.append(journal_query)
 
 ranked.radar.collect_crossref = collect_crossref_expanded
 ranked.load_external_metric_rows = load_tsv_rows
