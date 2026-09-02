@@ -87,6 +87,12 @@ CROSSREF_TOPIC_QUERIES = [
 # two platforms.
 PREPRINT_SOURCES = {"arXiv", "bioRxiv"}
 
+# Nature assigns the d41586 DOI series to newsroom/editorial content rather
+# than primary research articles.  Crossref still classifies these records as
+# journal-article, so the source whitelist alone cannot distinguish them.
+NON_RESEARCH_DOI_PREFIXES = ("10.1038/d41586-",)
+NON_RESEARCH_URL_MARKERS = ("nature.com/articles/d41586-",)
+
 ARXIV_QBIO_CATEGORIES = {
     "q-bio.GN",
     "q-bio.CB",
@@ -265,7 +271,12 @@ def is_priority_journal(name: str) -> bool:
 def is_allowed_source(article: Article) -> bool:
     if article.record_type == "Preprint":
         return article.source in PREPRINT_SOURCES
-    return is_top_journal(article.journal)
+    doi = normalize_doi(article.doi)
+    url = (article.url or "").lower()
+    is_non_research = any(
+        doi.startswith(prefix) for prefix in NON_RESEARCH_DOI_PREFIXES
+    ) or any(marker in url for marker in NON_RESEARCH_URL_MARKERS)
+    return is_top_journal(article.journal) and not is_non_research
 
 
 def load_keywords() -> dict:

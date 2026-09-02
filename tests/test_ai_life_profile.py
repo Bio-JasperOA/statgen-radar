@@ -108,6 +108,18 @@ class ProfileRegressionTests(unittest.TestCase):
         self.assertFalse(radar.is_top_journal("Nature Medicine"))
         self.assertFalse(radar.is_top_journal("Briefings in Bioinformatics"))
 
+    def test_nature_news_doi_is_not_a_research_article(self) -> None:
+        record = article(
+            "Mutating every DNA letter of a genome shows surprising effects",
+            "Artificial-intelligence models predict biological consequences.",
+            "Nature",
+        )
+        record.doi = "10.1038/d41586-026-02609-y"
+        record.url = "https://www.nature.com/articles/d41586-026-02609-y"
+        radar.score_article(record, self.keywords)
+        self.assertTrue(record.topic_eligible)
+        self.assertFalse(radar.is_allowed_source(record))
+
 
 class PublishingRegressionTests(unittest.TestCase):
     def test_no_doi_preprints_remain_independent(self) -> None:
