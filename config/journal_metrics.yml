@@ -4,6 +4,58 @@ preprint_publication_score: 4
 unknown_journal_score: 0
 data_source_note: User-provided 2025 Journal Impact Factor workbook
 
+# Formal articles are eligible only when the normalized journal name matches
+# one of these entries or aliases exactly. JIF is used for ranking/display, not
+# as a substitute for this whitelist.
+top_journals:
+  - name: Nature
+    aliases: [NATURE]
+  - name: Science
+    aliases: [SCIENCE]
+  - name: Cell
+    aliases: [CELL]
+  - name: Nature Methods
+    aliases: [NAT METHODS, Nature methods]
+  - name: Nature Biotechnology
+    aliases: [NAT BIOTECHNOL]
+  - name: Nature Machine Intelligence
+    aliases: [NAT MACH INTELL]
+  - name: Nature Computational Science
+    aliases: [NAT COMPUT SCI]
+  - name: Nature Biomedical Engineering
+    aliases: [NAT BIOMED ENG]
+  - name: Nature Genetics
+    aliases: [NAT GENET]
+  - name: Nature Cell Biology
+    aliases: [NAT CELL BIOL]
+  - name: Cell Systems
+    aliases: [CELL SYST]
+  - name: Cell Genomics
+    aliases: [CELL GENOM]
+  - name: Cell Stem Cell
+    aliases: [CELL STEM CELL]
+  - name: Developmental Cell
+    aliases: [DEV CELL]
+  - name: Genome Biology
+    aliases: [GENOME BIOL]
+  - name: Nature Communications
+    aliases: [NAT COMMUN]
+  - name: Science Advances
+    aliases: [SCI ADV]
+  - name: Proceedings of the National Academy of Sciences
+    aliases:
+      - Proceedings of the National Academy of Sciences of the United States of America
+      - P NATL ACAD SCI USA
+      - PNAS
+  - name: Bioinformatics
+    aliases: [BIOINFORMATICS]
+  - name: PLOS Computational Biology
+    aliases: [PLOS COMPUT BIOL, PLoS Computational Biology]
+  - name: Genome Research
+    aliases: [GENOME RES]
+  - name: Molecular Systems Biology
+    aliases: [MOL SYST BIOL]
+
 # Publication-tier bonus added after relevance screening.
 tiers:
   - min_if: 30
@@ -21,7 +73,7 @@ tiers:
   - min_if: 0
     score: 1
 
-# Curated 2025 JIF values used by StatGen Radar. Journal names are normalized
+# Curated 2025 JIF values used by AI for Life Science Radar. Names are normalized
 # case-insensitively; aliases cover common Crossref/RSS naming variants.
 journals:
   Nature:

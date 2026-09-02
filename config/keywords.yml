@@ -1,170 +1,221 @@
-core:
-  genome-wide association: 6
-  gwas: 6
-  statistical genetics: 6
-  genetic association: 5
-  genetic discovery: 5
-  genomics: 3
-  human genetics: 4
-  complex trait: 4
-  summary statistics: 4
-methods:
-  fine-mapping: 4
-  colocalization: 4
-  mendelian randomization: 4
-  genetic correlation: 4
-  heritability: 3
-  polygenic risk score: 4
-  linkage disequilibrium: 3
-  rare variant: 3
-  gene-based association: 3
-  trans-ancestry: 3
-  multi-ancestry: 3
-  pleiotropy: 3
-  bayesian framework: 3
-  bayesian model: 3
-  longitudinal model: 3
-  longitudinal phenotype: 4
-  longitudinal phenotyping: 4
-  electronic health record: 4
-  electronic health records: 4
-  ehr: 2
-  disease trajectory: 5
-  disease trajectories: 5
-  disease progression: 4
-  disease evolution: 4
-  disease dynamics: 4
-  temporal trajectory: 3
-  clinical trajectory: 4
-  multistate model: 3
-  state transition model: 3
-  survival trajectory: 3
-functional:
-  eqtl: 3
-  sqtl: 3
-  pqtl: 3
-  twas: 3
-  variant-to-gene: 3
-  functional genomics: 2
-  regulatory genomics: 3
-  single-cell genomics: 3
-  somatic mutation: 5
-  somatic mutations: 5
-  somatic variant: 4
-  somatic variants: 4
-  tumor evolution: 5
-  clonal evolution: 4
-  cancer evolution: 5
-  mutational signature: 4
-  mutational signatures: 4
-  mosaic mutation: 4
-  mosaicism: 3
-emerging:
-  whole-genome sequencing: 2
-  long-read sequencing: 2
-  pangenome: 2
-  biobank: 2
-  single-cell genetics: 3
-  spatial qtl: 3
-  deep learning genetics: 3
-  machine learning genetics: 3
-  foundation model genomics: 3
-  bioinformatics: 3
-  computational genomics: 3
-  multi-omics: 3
-  single-cell multiomics: 3
-project_priority:
-  cancer: 2
-  cardiovascular: 2
-  comorbidity: 2
-  cross-trait: 2
-  mediation: 2
-context_genetics:
-  gene-environment interaction: 5
-  gene environment interaction: 5
-  gxe interaction: 4
-  genome-wide interaction study: 5
-  interaction gwas: 5
-  context-dependent genetic effect: 5
-  context-specific genetic effect: 5
-  gene-context interaction: 5
-  gene-treatment interaction: 4
-  genotype-treatment interaction: 4
-  environment-treatment interaction: 3
-  polygenic risk by environment: 4
-  polygenic risk by disease state: 4
-genome_evolution:
-  germline variant: 3
-  germline mutation: 3
-  germline susceptibility: 4
-  germline-somatic interaction: 5
-  somatic-germline interaction: 5
-  somatic mosaicism: 4
-  clonal hematopoiesis: 5
-  clonal hematopoiesis of indeterminate potential: 5
-  therapy-related clonal hematopoiesis: 5
-  environmental mutagenesis: 4
-  somatic evolution: 5
-dynamic_qtl:
-  cell-state eqtl: 5
-  cell state eqtl: 5
-  context-specific eqtl: 5
-  cell-type-specific eqtl: 4
-  cell type specific eqtl: 4
-  response eqtl: 5
-  response-eqtl: 5
-  dynamic eqtl: 4
-  interaction eqtl: 4
-  single-cell eqtl: 4
-  single cell eqtl: 4
-  stimulation eqtl: 4
-  condition-specific eqtl: 4
-  caqtl: 3
-trajectory_methods:
-  multimorbidity trajectory: 5
-  genetically informed disease trajectory: 6
-  disease state transition: 5
-  transition-specific genetics: 6
-  transition-specific association: 5
-  multi-state model: 4
-  multi-state analysis: 4
-  illness-death model: 4
-  hidden markov model: 3
-  state-space model: 4
-  joint longitudinal survival model: 4
-  time-varying genetic effect: 5
-  dynamic prediction: 4
-  counterfactual trajectory: 5
-  patient trajectory: 4
-  longitudinal disease course: 4
-cardio_oncology:
-  cardio-oncology: 5
-  cardio oncology: 5
-  cancer cardiovascular comorbidity: 6
-  cancer cardiovascular disease: 5
-  cancer-cardiovascular trajectory: 6
-  cardiovascular cancer trajectory: 6
-  shared genetic architecture: 5
-  cross-disease genetic architecture: 5
-  clonal hematopoiesis cardiovascular: 6
-  cancer therapy cardiotoxicity: 4
-  treatment-related cardiotoxicity: 4
-  immune checkpoint inhibitor myocarditis: 3
-  cancer-associated thrombosis: 3
-integrative_methods:
-  local genetic correlation: 5
-  multivariate gwas: 4
-  cross-trait meta-analysis: 4
-  genomic sem: 5
-  genomic structural equation modeling: 5
-  latent causal variable: 4
-  polygenic overlap: 4
-  shared genetic liability: 4
-  longitudinal multi-omics: 4
-  multimodal longitudinal model: 4
-  disease foundation model: 5
-  human disease foundation model: 6
-  longitudinal transformer: 4
-  neural ode: 4
-  graph neural network disease trajectory: 4
-  digital twin disease model: 4
+profile: ai-for-life-science
+
+thresholds:
+  ai: 5
+  life_science: 4
+  topic_total: 10
+  preprint_topic_total: 12
+  daily_limit: 10
+  weekly_limit: 30
+
+# A record must independently clear both the AI and life-science gates. Scores
+# are transparent and deterministic; they are not substitutes for either gate.
+ai:
+  artificial intelligence: 7
+  machine learning: 5
+  deep learning: 6
+  foundation model: 7
+  foundation models: 7
+  large language model: 6
+  large language models: 6
+  biological language model: 7
+  protein language model: 7
+  genomic language model: 7
+  generative artificial intelligence: 7
+  generative ai: 7
+  generative model: 5
+  generative models: 5
+  transformer model: 5
+  transformer models: 5
+  transformer: 5
+  transformers: 5
+  diffusion model: 6
+  diffusion models: 6
+  variational autoencoder: 6
+  variational autoencoders: 6
+  variational auto encoder: 6
+  vae: 6
+  autoencoder: 5
+  autoencoders: 5
+  auto encoder: 5
+  flow matching: 6
+  neural ode: 6
+  neural odes: 6
+  neural ordinary differential equation: 6
+  latent dynamical model: 6
+  latent dynamical models: 6
+  pretrained: 4
+  pre trained: 4
+  pretraining: 5
+  pre training: 5
+  llm: 6
+  llms: 6
+  gnn: 6
+  gnns: 6
+  embedding: 4
+  embeddings: 4
+  joint embedding: 6
+  generative pretraining: 7
+  generative pre training: 7
+  graph neural network: 6
+  graph neural networks: 6
+  neural network: 4
+  neural networks: 4
+  representation learning: 5
+  self-supervised learning: 6
+  contrastive learning: 5
+  multimodal learning: 6
+  transfer learning: 4
+  reinforcement learning: 5
+  computer vision: 5
+  virtual cell: 7
+  virtual cells: 7
+  virtual embryo: 8
+  virtual embryos: 8
+  digital cell: 7
+  in silico perturbation: 6
+  perturbation prediction: 7
+  cell state prediction: 7
+  cell fate prediction: 7
+
+life_science:
+  life science: 4
+  life sciences: 4
+  biology: 4
+  biological: 3
+  molecular biology: 5
+  cellular biology: 5
+  cell biology: 5
+  developmental biology: 6
+  genomics: 5
+  genome: 3
+  transcriptomics: 5
+  transcriptome: 4
+  proteomics: 5
+  proteome: 4
+  epigenomics: 5
+  multi omics: 5
+  single cell: 6
+  spatial transcriptomics: 7
+  spatial omics: 7
+  embryo: 6
+  embryos: 6
+  embryogenesis: 7
+  embryonic development: 7
+  stem cell: 5
+  stem cells: 5
+  organoid: 5
+  organoids: 5
+  cell atlas: 5
+  cell state: 4
+  cell fate: 5
+  differentiation: 4
+  lineage tracing: 5
+  cell lineage: 5
+  cell lineages: 5
+  morphogenesis: 6
+  organogenesis: 6
+  gene expression: 4
+  protein: 3
+  proteins: 3
+  rna: 3
+  dna: 3
+  perturbation: 3
+  drug discovery: 5
+  molecular: 2
+  cellular: 2
+
+# These terms rank records that are closest to the user's current Virtual
+# Embryo work, but they never bypass either required gate.
+current_priority:
+  virtual embryo: 6
+  virtual embryos: 6
+  embryo model: 5
+  embryo models: 5
+  developmental dynamics: 5
+  developmental trajectory: 5
+  developmental trajectories: 5
+  cell state transition: 5
+  cell state transitions: 5
+  cell fate: 4
+  spatiotemporal: 4
+  spatial transcriptomics: 4
+  single cell foundation model: 6
+  single cell representation: 4
+  perturbation response: 4
+
+# If one of these appears anywhere in the title or abstract, the work is
+# treated as statistical-genetics-led and excluded even when it uses AI.
+excluded_primary_purpose:
+  - genome wide association
+  - gwas
+  - polygenic risk score
+  - polygenic risk scores
+  - polygenic score
+  - polygenic scores
+  - mendelian randomization
+  - genetic correlation
+  - genetic correlations
+  - statistical genetics
+  - fine mapping
+  - colocalization
+  - genetic association study
+  - genetic association studies
+  - heritability
+  - phewas
+  - phenome wide association
+  - twas
+  - transcriptome wide association
+  - ldsc
+  - ld score regression
+  - linkage disequilibrium score regression
+  - eqtl
+  - expression quantitative trait locus
+  - sqtl
+  - splicing quantitative trait locus
+
+excluded_content_prefixes:
+  - publisher author correction
+  - publisher correction
+  - author correction
+  - correction
+  - editorial
+  - news and views
+  - news views
+  - protocol
+  - review
+  - a review
+  - systematic review
+  - scoping review
+  - narrative review
+  - perspective
+  - commentary
+  - viewpoint
+
+# These applied/clinical topics are outside the current Virtual Embryo and
+# mechanistic AI-for-biology focus. They are checked in the title and opening
+# abstract, where the paper's main task is normally stated.
+excluded_domain_noise:
+  - electronic health record
+  - electronic health records
+  - ehr
+  - clinical outcome
+  - clinical outcomes
+  - clinical prediction
+  - clinical risk
+  - radiology
+  - computed tomography
+  - ct
+  - magnetic resonance imaging
+  - mri
+  - pathology diagnosis
+  - pathological diagnosis
+  - survival prediction
+  - risk prediction
+  - prognosis prediction
+  - molecular docking
+  - docking
+  - qsar
+  - quantitative structure activity relationship
+  - admet
+  - virtual screening

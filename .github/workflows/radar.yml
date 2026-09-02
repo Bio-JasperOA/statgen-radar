@@ -1,4 +1,4 @@
-name: StatGen Radar
+name: AI for Life Science Radar
 
 on:
   workflow_dispatch:
@@ -26,7 +26,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: statgen-radar-${{ github.ref }}
+  group: ai-life-science-radar-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -43,6 +43,8 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.txt
+      - name: Run profile regression tests
+        run: python -m unittest discover -s tests -v
       - name: Resolve run mode
         id: config
         shell: bash
@@ -57,7 +59,7 @@ jobs:
             echo "mode=daily" >> "$GITHUB_OUTPUT"
             echo "days=1" >> "$GITHUB_OUTPUT"
           fi
-      - name: Run radar
+      - name: Run AI for Life Science Radar
         run: python run_ranked_with_tsv.py --mode "${{ steps.config.outputs.mode }}" --days "${{ steps.config.outputs.days }}"
       - name: Add complete inclusion table
         run: python add_inclusion_table.py --mode "${{ steps.config.outputs.mode }}"
@@ -68,9 +70,9 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A reports data/literature.db
           if git diff --cached --quiet; then
-            echo "No Radar changes to commit"
+            echo "No AI for Life Science Radar changes to commit"
           else
-            git commit -m "chore: update literature brief"
+            git commit -m "chore: update AI for life science brief"
             for attempt in 1 2 3; do
               if git push origin HEAD:main; then
                 break
@@ -106,12 +108,12 @@ jobs:
             exit 1
           fi
           python scripts/publish_to_website.py "$REPORT" website
-          git -C website config user.name "statgen-radar[bot]"
-          git -C website config user.email "statgen-radar@users.noreply.github.com"
+          git -C website config user.name "ai-life-science-radar[bot]"
+          git -C website config user.email "ai-life-science-radar@users.noreply.github.com"
           git -C website add statgen-radar/reports data/statgen-radar.json data/statgen-radar-journals.json
           if git -C website diff --cached --quiet; then
             echo "Website is already up to date"
             exit 0
           fi
-          git -C website commit -m "content: publish StatGen Radar brief"
+          git -C website commit -m "content: publish AI for Life Science brief"
           git -C website push origin HEAD:main

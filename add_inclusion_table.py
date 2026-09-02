@@ -47,6 +47,9 @@ def parse_records(text: str) -> list[dict[str, str]]:
             "jif": field(block, "Impact factor", field(block, "2025 JIF")),
             "published": field(block, "Published"),
             "relevance": field(block, "Relevance score"),
+            "ai_fit": field(block, "AI fit"),
+            "life_fit": field(block, "Life-science fit"),
+            "priority": field(block, "Priority fit"),
             "publication": field(block, "Publication score"),
             "total": field(block, "Total score"),
             "doi": field(block, "DOI"),
@@ -58,14 +61,14 @@ def build_table(records: list[dict[str, str]]) -> str:
     lines = [
         "## Full inclusion table",
         "",
-        f"All {len(records)} records retained after relevance screening are listed below. Detailed interpretation may focus on a smaller priority subset, but no included record is omitted from this table.",
+        f"All {len(records)} records retained after AI, life-science and source screening are listed below. No included record is omitted from this table.",
         "",
-        "| No. | Article | Type | Journal / platform | JIF | Published | Relevance | Publication | Total | DOI |",
-        "|---:|---|---|---|---:|---|---:|---:|---:|---|",
+        "| No. | Article | Type | Journal / platform | JIF | Published | Relevance | AI fit | Life-science fit | Priority | Publication | Total | DOI |",
+        "|---:|---|---|---|---:|---|---:|---:|---:|---:|---:|---:|---|",
     ]
     for index, record in enumerate(records, 1):
         lines.append(
-            "| {index} | {title} | {record_type} | {journal} | {jif} | {published} | {relevance} | {publication} | {total} | {doi} |".format(
+            "| {index} | {title} | {record_type} | {journal} | {jif} | {published} | {relevance} | {ai_fit} | {life_fit} | {priority} | {publication} | {total} | {doi} |".format(
                 index=index,
                 **{key: escape_cell(value) for key, value in record.items()},
             )
@@ -77,7 +80,7 @@ def build_empty_section() -> str:
     return "\n".join([
         "## Full inclusion table",
         "",
-        "No records passed both eligibility thresholds in this run.",
+        "No records passed the AI, life-science and source eligibility gates in this run.",
     ])
 
 
