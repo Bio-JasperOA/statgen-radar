@@ -5,7 +5,10 @@ import argparse
 import json
 import re
 import shutil
+from datetime import timezone
 from pathlib import Path
+
+from dateutil import parser as dtparser
 
 PROFILE = "ai-for-life-science"
 DISPLAY_NAME = "AI for Life Science Radar"
@@ -113,6 +116,16 @@ def impact_factor_value(value: str) -> float | None:
     return value_number
 
 
+def sortable_date(value: str) -> float:
+    try:
+        parsed = dtparser.parse(str(value or "").strip())
+    except (TypeError, ValueError, OverflowError):
+        return float("-inf")
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.timestamp()
+
+
 def parse_inclusion_table(text: str, inclusion_date: str) -> list[dict]:
     lines = text.splitlines()
     records: list[dict] = []
@@ -207,8 +220,8 @@ def build_journal_index(reports_dir: Path) -> list[dict]:
         ),
         reverse=True,
     )
-    rows.sort(key=lambda row: row["published"], reverse=True)
-    rows.sort(key=lambda row: row["inclusion_date"], reverse=True)
+    rows.sort(key=lambda row: sortable_date(row["published"]), reverse=True)
+    rows.sort(key=lambda row: sortable_date(row["inclusion_date"]), reverse=True)
     return rows
 
 

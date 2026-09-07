@@ -152,6 +152,28 @@ Profile: ai-for-life-science
             ["2026-09-02", "2026-09-01"],
         )
 
+    def test_secondary_publication_date_parses_rfc_and_puts_unknown_last(self) -> None:
+        fixture = """# AI for Life Science Radar — Daily Brief
+
+Profile: ai-for-life-science
+
+## Full inclusion table
+
+| No. | Article | Type | Journal / platform | JIF | Published | Relevance | AI fit | Life-science fit | Priority | Publication | Total | DOI |
+|---:|---|---|---|---:|---|---:|---:|---:|---:|---:|---:|---|
+| 1 | Unknown-date paper | Preprint | bioRxiv | Preprint | Unknown | 40 | 20 | 20 | 0 | 4 | 99 | 10.1101/unknown |
+| 2 | RFC-date paper | Preprint | bioRxiv | Preprint | Sun, 06 Sep 2026 18:00:00 GMT | 12 | 6 | 6 | 0 | 4 | 12 | 10.1101/rfc |
+| 3 | ISO-date paper | Preprint | bioRxiv | Preprint | 2026-09-07 | 12 | 6 | 6 | 0 | 4 | 12 | 10.1101/iso |
+"""
+        with tempfile.TemporaryDirectory() as directory:
+            reports = Path(directory)
+            (reports / "2026-09-07.md").write_text(fixture, encoding="utf-8")
+            rows = publish.build_journal_index(reports)
+        self.assertEqual(
+            [row["article"] for row in rows],
+            ["ISO-date paper", "RFC-date paper", "Unknown-date paper"],
+        )
+
     def test_no_doi_preprints_remain_independent(self) -> None:
         fixture = """# AI for Life Science Radar — Daily Brief
 
