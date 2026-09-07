@@ -122,6 +122,36 @@ class ProfileRegressionTests(unittest.TestCase):
 
 
 class PublishingRegressionTests(unittest.TestCase):
+    @staticmethod
+    def inclusion_report(title: str, score: int, published: str) -> str:
+        return f"""# AI for Life Science Radar — Daily Brief
+
+Profile: ai-for-life-science
+
+## Full inclusion table
+
+| No. | Article | Type | Journal / platform | JIF | Published | Relevance | AI fit | Life-science fit | Priority | Publication | Total | DOI |
+|---:|---|---|---|---:|---|---:|---:|---:|---:|---:|---:|---|
+| 1 | {title} | Preprint | bioRxiv | Preprint | {published} | 12 | 6 | 6 | 0 | 4 | {score} | 10.1101/{published}.{score} |
+"""
+
+    def test_cumulative_index_is_newest_first(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            reports = Path(directory)
+            (reports / "2026-09-01.md").write_text(
+                self.inclusion_report("Older high-score paper", 99, "2026-09-01"),
+                encoding="utf-8",
+            )
+            (reports / "2026-09-02.md").write_text(
+                self.inclusion_report("Newer lower-score paper", 12, "2026-09-02"),
+                encoding="utf-8",
+            )
+            rows = publish.build_journal_index(reports)
+        self.assertEqual(
+            [row["inclusion_date"] for row in rows],
+            ["2026-09-02", "2026-09-01"],
+        )
+
     def test_no_doi_preprints_remain_independent(self) -> None:
         fixture = """# AI for Life Science Radar — Daily Brief
 

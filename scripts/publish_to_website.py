@@ -195,17 +195,20 @@ def build_journal_index(reports_dir: Path) -> list[dict]:
             if previous is None or record["inclusion_date"] < previous["inclusion_date"]:
                 by_key[key] = record
     rows = list(by_key.values())
+    # The stored index is chronological by default. The frontend applies the
+    # separate score ordering only inside the user's pinned group.
+    rows.sort(key=lambda row: (row["journal"].lower(), row["article"].lower()))
     rows.sort(
         key=lambda row: (
-            -(row["score"] if row["score"] is not None else -1),
-            -(row["priority_score"] if row["priority_score"] is not None else -1),
-            -(row["relevance_score"] if row["relevance_score"] is not None else -1),
-            row["impact_factor"] is None,
-            -(row["impact_factor"] if row["impact_factor"] is not None else -1),
-            row["journal"].lower(),
-            row["article"].lower(),
-        )
+            row["score"] if row["score"] is not None else -1,
+            row["priority_score"] if row["priority_score"] is not None else -1,
+            row["relevance_score"] if row["relevance_score"] is not None else -1,
+            row["impact_factor"] if row["impact_factor"] is not None else -1,
+        ),
+        reverse=True,
     )
+    rows.sort(key=lambda row: row["published"], reverse=True)
+    rows.sort(key=lambda row: row["inclusion_date"], reverse=True)
     return rows
 
 
